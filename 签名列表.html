@@ -264,11 +264,6 @@
                                 <span>上传签名文件</span>
                                 <span style="font-size:11px;color:var(--gray-300);">.keystore .jks .p12 .pfx</span>
                             </button>
-                            <button type="button" class="btn btn-default" onclick="generateSignFile()" style="flex:1;height:80px;border:2px dashed var(--gray-200);flex-direction:column;">
-                                <i class="fa fa-magic" style="font-size:24px;margin-bottom:4px;"></i>
-                                <span>生成签名文件</span>
-                                <span style="font-size:11px;color:var(--gray-300);">根据名称自动生成</span>
-                            </button>
                         </div>
                         <input type="file" id="signFileInput" accept=".keystore,.jks,.p12,.pfx,.cer,.pem" style="display:none;" onchange="handleFileSelect(this)">
                         <div id="selectedFileDisplay" style="display:none;padding:12px;background:var(--gray-100);border-radius:8px;">

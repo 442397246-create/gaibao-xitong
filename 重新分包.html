@@ -487,16 +487,23 @@
                                     </select>
                                 </div>
                             </div>
-                            <!-- OAID证书文件（选择"是"时显示，只读，来源：新增游戏时上传） -->
+                            <!-- OAID证书文件（选择"是"时显示，上传文件） -->
                             <div class="form-row" data-systems="android" id="oaidCertSection" style="display:none;">
                                 <div class="form-row-label">OAID证书</div>
                                 <div class="form-row-body">
                                     <div class="v3-sign-container">
-                                        <div class="v3-sign-file-info show" id="oaidCertFileInfo">
+                                        <div class="v3-sign-upload" id="oaidCertUploadArea" onclick="document.getElementById('oaidCertFileInput').click()">
+                                            <i class="fa fa-cloud-upload"></i>
+                                            <p>点击上传OAID证书（.pem / .cert / .crt）</p>
+                                            <input type="file" id="oaidCertFileInput" style="display:none;" accept=".pem,.cert,.crt">
+                                        </div>
+                                        <div class="v3-sign-file-info" id="oaidCertFileInfo">
                                             <i class="fa fa-file-text-o" style="font-size:24px;color:var(--primary);"></i>
                                             <div class="file-details">
-                                                <div class="file-name" id="oaidCertFileName">选择母包后自动显示</div>
+                                                <div class="file-name" id="oaidCertFileName"></div>
+                                                <div class="file-size" id="oaidCertFileSize"></div>
                                             </div>
+                                            <button type="button" class="remove-btn" onclick="document.getElementById('oaidCertFileInput').value='';document.getElementById('oaidCertUploadArea').style.display='flex';document.getElementById('oaidCertFileInfo').classList.remove('show');"><i class="fa fa-times-circle"></i></button>
                                         </div>
                                     </div>
                                 </div>
@@ -670,6 +677,25 @@
                                         <option value="false">否</option>
                                         <option value="true">是</option>
                                     </select>
+                                </div>
+                            </div>
+                            <!-- 安卓动态权限配置（选择"是"时显示） -->
+                            <div class="form-indent" data-systems="android" id="authSection" style="display:none;">
+                                <div class="form-row" data-systems="android">
+                                    <div class="form-row-label">是否设置安卓动态权限参数</div>
+                                    <div class="form-row-body">
+                                        <select id="isSetAndroidPermissions" class="form-input" onchange="document.getElementById('androidPermissionsSection').style.display = this.value === 'true' ? '' : 'none'">
+                                            <option value="false">否</option>
+                                            <option value="true">是</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row" data-systems="android" id="androidPermissionsSection" style="display:none;">
+                                    <div class="form-row-label">安卓动态权限</div>
+                                    <div class="form-row-body">
+                                        <textarea class="form-textarea" id="androidPermissionsJson" placeholder='例如：[{"permission":"android.permission.READ_EXTERNAL_STORAGE","description":"读取存储"},{"permission":"android.permission.CAMERA","description":"相机权限"}]' style="min-height:120px;font-family:monospace;font-size:13px;"></textarea>
+                                        <div class="form-hint">请输入JSON数组格式的安卓动态权限配置</div>
+                                    </div>
                                 </div>
                             </div>
                             <!-- Smali处理模式 -->
@@ -1383,6 +1409,7 @@
             safeToggle('isModifyGameIcon','gameNewIconPath');
             safeToggle('isModifyGameVersion','gameVersionGroup');
             safeToggle('isExecuteAuthorization','authSection');
+            safeToggle('isSetAndroidPermissions','androidPermissionsSection');
             safeToggle('isModifySmaliMerge','smaliMergeSection');
             safeToggle('isModifyResMerge','resMergeSection');
             safeToggle('isExistOaidCert','oaidCertSection');
