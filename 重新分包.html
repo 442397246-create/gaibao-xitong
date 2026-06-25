@@ -1,0 +1,2391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重新分包 - 在线分包管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="common.css" rel="stylesheet">
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;}
+        body {font-family: "Microsoft Yahei", sans-serif;background-color: #F2F3F5;color: #1D2129;}
+        :root {
+            --primary: #165DFF;--success: #00B42A;--warning: #FF7D00;--danger: #F53F3F;
+            --gray-100: #F2F3F5;--gray-200: #E5E6EB;--gray-300: #C9CDD4;
+            --gray-600: #86909C;--gray-900: #1D2129;
+        }
+        .content {padding: 24px;flex: 1;}
+        /* 卡片 */
+        .card {background: white;border-radius: 12px;box-shadow: 0 2px 8px rgba(0,0,0,0.06);}
+        .card-body {padding: 24px;}
+        /* 标签页 */
+        .tabs {display: flex;border-bottom: 2px solid var(--gray-200);margin-bottom: 24px;}
+        .tab {padding: 12px 24px;cursor: pointer;font-size: 14px;color: var(--gray-600);border-bottom: 2px solid transparent;transition: all 0.2s;}
+        .tab:hover {color: var(--primary);}
+        .tab.active {color: var(--primary);border-bottom-color: var(--primary);font-weight: 500;}
+        /* 按钮 */
+        .btn {padding: 8px 24px;border-radius: 8px;border: none;cursor: pointer;font-size: 14px;transition: all 0.3s;display: inline-flex;align-items: center;justify-content: center;gap: 6px;text-decoration: none;}
+        .btn-primary {background-color: var(--primary);color: white;}
+        .btn-primary:hover {background-color: #0D47A1;}
+        .btn-default {background-color: white;border: 1px solid var(--gray-200);color: var(--gray-900);}
+        .btn-default:hover {background-color: var(--gray-100);}
+        /* 表单 */
+        .form-group {margin-bottom: 20px;}
+        .form-label {display: block;margin-bottom: 8px;font-size: 14px;font-weight: 500;color: var(--gray-900);}
+        .form-input, .form-select, .form-textarea {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;}
+        .form-textarea {height: auto;min-height: 80px;padding: 12px;resize: vertical;}
+        .form-input:focus, .form-select:focus, .form-textarea:focus {outline: none;border-color: var(--primary);}
+        .required {color: var(--danger);}
+        .grid {display: grid;gap: 24px;}
+        .grid-cols-2 {grid-template-columns: repeat(2, 1fr);}
+        .grid-cols-3 {grid-template-columns: repeat(3, 1fr);}
+        .col-span-2 {grid-column: span 2;}
+        .col-span-3 {grid-column: span 3;}
+        .flex {display: flex;}
+        .justify-end {justify-content: flex-end;}
+        .gap-3 {gap: 12px;}
+        .gap-6 {gap: 24px;}
+        .gap-24 {gap: 24px;}
+        .form-row-2 {display: grid;grid-template-columns: repeat(2, 1fr);gap: 24px;}
+        /* 垂直表单行 */
+        .form-row {display: flex;align-items: flex-start;gap: 16px;margin-bottom: 18px;}
+        .form-row-label {width: 215px;flex-shrink: 0;text-align: right;padding-top: 10px;font-size: 14px;color: var(--gray-900);line-height: 1.4;word-break: keep-all;}
+        .form-row-body {flex: 1;min-width: 0;max-width: 560px;}
+        .form-row .form-input {width: 100%;}
+        /* 分区标题 */
+        .section-divider {display:flex;align-items:center;margin: 28px 0 18px;padding-left: 215px;}
+        .section-divider::before {content:'';flex:1;height:1px;background:var(--gray-200);margin-right: 12px;}
+        .section-divider span {font-size:13px;color:var(--gray-600);white-space:nowrap;padding:0 12px 0 0;}
+        /* 条件展开子区域 */
+        .form-indent {margin-left: 215px;padding-left: 16px;border-left: 2px solid var(--primary);margin-bottom: 4px;}
+        .form-indent .form-row {margin-bottom: 14px;}
+        .form-indent .form-row-label {width: auto;min-width: 160px;text-align: left;padding-top: 10px;font-size: 13px;color: var(--gray-600);}
+        .form-indent .form-row-body {max-width: 420px;}
+        /* 自定义下拉 */
+        .custom-select {position: relative;}
+        .custom-dropdown {position: absolute;top: 100%;left: 0;right: 0;background: white;border: 1px solid var(--gray-200);border-radius: 8px;margin-top: 4px;max-height: 200px;overflow-y: auto;z-index: 10;display: none;}
+        .custom-dropdown.show {display: block;}
+        .custom-dropdown-item {padding: 10px 16px;cursor: pointer;transition: all 0.2s;}
+        .custom-dropdown-item:hover {background: var(--gray-100);}
+        /* 上传区域 */
+        .upload-area {border: 2px dashed var(--gray-300);border-radius: 8px;padding: 12px;text-align: center;cursor: pointer;transition: all 0.2s;min-height: 80px;display: flex;flex-direction: column;justify-content: center;align-items: center;}
+        .upload-area:hover {border-color: var(--primary);}
+        .upload-area i {font-size: 24px;color: var(--gray-600);margin-bottom: 4px;}
+        .upload-area p {font-size: 11px;color: var(--gray-600);}
+        .upload-preview {display: flex;align-items: center;gap: 12px;margin-top: 12px;padding: 12px;background: var(--gray-100);border-radius: 8px;}
+        .upload-preview img {width: 40px;height: 40px;object-fit: cover;border-radius: 4px;}
+        .upload-preview .file-name {flex: 1;font-size: 14px;color: var(--gray-900);}
+        .upload-preview .remove-btn {background: none;border: none;color: var(--danger);cursor: pointer;font-size: 16px;}
+        /* V3签名文件区域样式 */
+        .v3-sign-container {display: flex;flex-direction: column;gap: 12px;}
+        .v3-sign-upload {border: 2px dashed var(--gray-300);border-radius: 8px;padding: 12px;text-align: center;cursor: pointer;transition: all 0.2s;min-height: 80px;display: flex;flex-direction: column;justify-content: center;align-items: center;}
+        .v3-sign-upload:hover {border-color: var(--primary);}
+        .v3-sign-upload i {font-size: 24px;color: var(--gray-600);margin-bottom: 4px;}
+        .v3-sign-upload p {font-size: 11px;color: var(--gray-600);}
+        .v3-sign-file-info {display: none;align-items: center;gap: 12px;padding: 12px;background: var(--gray-100);border-radius: 8px;border: 1px solid var(--gray-200);}
+        .v3-sign-file-info.show {display: flex;}
+        .v3-sign-file-info i {font-size: 24px;color: var(--primary);}
+        .v3-sign-file-info .file-details {flex: 1;}
+        .v3-sign-file-info .file-name {font-size: 14px;color: var(--gray-900);}
+        .v3-sign-file-info .file-size {font-size: 12px;color: var(--gray-600);}
+        .v3-sign-file-info .remove-btn {background: none;border: none;color: var(--danger);cursor: pointer;font-size: 16px;padding: 4px;}
+        .v3-sign-file-info .remove-btn:hover {color: #d93025;}
+        /* 密钥别名和密钥密码同行布局 */
+        .key-row {display: flex;gap: 24px;align-items: flex-start;}
+        .key-row .form-group {flex: 1;margin-bottom: 0;}
+        .key-alias-group, .key-password-group {display: none;}
+        .key-alias-group.show, .key-password-group.show {display: block;}
+        /* 消息提示 */
+        .message-box {position: fixed;top: 80px;right: 24px;padding: 12px 24px;border-radius: 8px;color: white;font-size: 14px;z-index: 99999;animation: slideIn 0.3s ease;max-width: 300px;}
+        .message-success {background: var(--success);}
+        .message-error {background: var(--danger);}
+        @keyframes slideIn {from {transform: translateX(100%);opacity: 0;} to {transform: translateX(0);opacity: 1;}}
+        /* 弹窗样式 */
+        .modal-overlay {position: fixed;top: 0;left: 0;right: 0;bottom: 0;background: rgba(0,0,0,0.5);display: none;justify-content: center;align-items: center;z-index: 9999;}
+        .modal-overlay.show {display: flex;}
+        .modal {background: white;border-radius: 16px;padding: 0;width: 440px;max-width: 90vw;animation: scaleIn 0.3s ease;}
+        @keyframes scaleIn {
+            from {opacity: 0;transform: scale(0.95);}
+            to {opacity: 1;transform: scale(1);}
+        }
+        .modal-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;}
+        .modal-title {font-size: 16px;font-weight: 600;color: var(--gray-900);}
+        .modal-close {background: none;border: none;font-size: 24px;cursor: pointer;color: var(--gray-600);padding: 4px;}
+        .modal-close:hover {color: var(--gray-900);}
+        .modal-body {padding: 24px;}
+        .modal-footer {padding: 16px 24px;border-top: 1px solid var(--gray-200);display: flex;justify-content: flex-end;gap: 12px;}
+        /* 表单样式补充 */
+        .form-group {margin-bottom: 20px;}
+        .form-label {display: block;margin-bottom: 8px;font-size: 14px;font-weight: 500;color: var(--gray-900);}
+        .form-input {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;transition: all 0.2s;}
+        .form-input:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-input:disabled {background-color: var(--gray-100);cursor: not-allowed;}
+        .required {color: var(--danger);}
+        
+        /* 确认弹窗 */
+        .confirm-icon {font-size: 64px;text-align: center;margin-bottom: 16px;color: var(--danger);}
+        .confirm-message {text-align: center;font-size: 16px;color: var(--gray-900);margin-bottom: 8px;}
+        .confirm-desc {text-align: center;font-size: 14px;color: var(--gray-600);margin-bottom: 24px;}
+        
+        /* 渠道选择器样式 */
+        .channel-input-wrapper {position: relative;display: flex;}
+        .channel-input-wrapper .form-input {flex: 1;border-top-right-radius: 0;border-bottom-right-radius: 0;border-right: none;}
+        .channel-select-btn {width: 44px;height: 44px;background: var(--gray-100);border: 1px solid var(--gray-200);border-top-right-radius: 8px;border-bottom-right-radius: 8px;cursor: pointer;display: flex;align-items: center;justify-content: center;color: var(--gray-600);transition: all 0.2s;}
+        .channel-select-btn:hover {background: var(--gray-200);color: var(--primary);}
+        .channel-modal {width: 700px;max-height: 80vh;display: flex;flex-direction: column;}
+        .channel-modal .modal-body {padding: 0;flex: 1;overflow: hidden;display: flex;flex-direction: column;}
+        .channel-search {padding: 16px 24px;border-bottom: 1px solid var(--gray-200);}
+        .channel-search-wrapper {display: flex;gap: 8px;align-items: flex-start;flex-wrap: wrap;}
+        .channel-search-input {flex: 1;height: 40px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;}
+        .channel-search-input:focus {outline: none;border-color: var(--primary);}
+        .channel-search-btn {height: 40px;padding: 0 20px;background: var(--primary);color: white;border: none;border-radius: 8px;cursor: pointer;font-size: 14px;transition: all 0.2s;flex-shrink: 0;}
+        .channel-search-btn:hover {background: #0D47A1;}
+        /* 平台多选下拉组件 */
+        .platform-filter-wrapper {position: relative;flex-shrink: 0;}
+        .platform-filter-btn {height: 40px;padding: 0 36px 0 14px;background: white;border: 1px solid var(--gray-200);border-radius: 8px;cursor: pointer;font-size: 14px;color: var(--gray-600);display: flex;align-items: center;gap: 6px;transition: all 0.2s;white-space: nowrap;position: relative;min-width: 130px;}
+        .platform-filter-btn:hover {border-color: var(--primary);color: var(--primary);}
+        .platform-filter-btn.active {border-color: var(--primary);color: var(--primary);background: rgba(22,93,255,0.04);}
+        .platform-filter-btn i {font-size: 10px;position: absolute;right: 12px;top: 50%;transform: translateY(-50%);transition: transform 0.2s;}
+        .platform-filter-btn.active i {transform: translateY(-50%) rotate(180deg);}
+        .platform-dropdown {display: none;position: absolute;top: 44px;left: 0;background: white;border: 1px solid var(--gray-200);border-radius: 8px;box-shadow: 0 4px 16px rgba(0,0,0,0.12);z-index: 100;min-width: 200px;max-height: 240px;overflow-y: auto;padding: 4px 0;}
+        .platform-dropdown.show {display: block;}
+        .platform-dropdown-item {display: flex;align-items: center;gap: 8px;padding: 10px 14px;cursor: pointer;font-size: 14px;color: var(--gray-900);transition: background 0.15s;}
+        .platform-dropdown-item:hover {background: rgba(22,93,255,0.04);}
+        .platform-dropdown-item input[type="checkbox"] {width: 16px;height: 16px;accent-color: var(--primary);cursor: pointer;}
+        .platform-dropdown-item label {cursor: pointer;flex: 1;}
+        .platform-selected-tags {display: flex;flex-wrap: wrap;gap: 6px;flex: 1;align-items: center;min-height: 40px;}
+        .platform-tag {display: inline-flex;align-items: center;gap: 4px;padding: 4px 10px;background: rgba(22,93,255,0.08);color: var(--primary);border: 1px solid rgba(22,93,255,0.2);border-radius: 16px;font-size: 13px;}
+        .platform-tag.account-tag {background: rgba(0,168,112,0.08);color: #00a870;border-color: rgba(0,168,112,0.2);}
+        .platform-tag-remove {cursor: pointer;font-size: 12px;opacity: 0.7;transition: opacity 0.15s;line-height: 1;}
+        .platform-tag-remove:hover {opacity: 1;}
+        .platform-dropdown-footer {display: flex;justify-content: space-between;padding: 8px 14px;border-top: 1px solid var(--gray-100);}
+        .platform-dropdown-footer button {font-size: 13px;padding: 4px 12px;border: 1px solid var(--gray-200);background: white;border-radius: 6px;cursor: pointer;transition: all 0.2s;}
+        .platform-dropdown-footer button:hover {border-color: var(--primary);color: var(--primary);}
+        .platform-dropdown-footer button.primary {background: var(--primary);color: white;border-color: var(--primary);}
+        .channel-selected-info {padding: 8px 24px;border-bottom: 1px solid var(--gray-200);font-size: 13px;color: var(--gray-600);}
+        /* 开关组件 */
+        .toggle-wrapper {display: flex;align-items: center;gap: 12px;}
+        .toggle-switch {position: relative;display: inline-block;width: 44px;height: 24px;flex-shrink: 0;}
+        .toggle-switch input {opacity: 0;width: 0;height: 0;}
+        .toggle-slider {position: absolute;cursor: pointer;top: 0;left: 0;right: 0;bottom: 0;background: var(--gray-300);border-radius: 24px;transition: all 0.3s;}
+        .toggle-slider:before {content: '';position: absolute;height: 18px;width: 18px;left: 3px;bottom: 3px;background: white;border-radius: 50%;transition: all 0.3s;box-shadow: 0 1px 3px rgba(0,0,0,0.2);}
+        .toggle-switch input:checked + .toggle-slider {background: var(--primary);}
+        .toggle-switch input:checked + .toggle-slider:before {transform: translateX(20px);}
+        .toggle-label {font-size: 14px;font-weight: 500;color: var(--gray-900);}
+        .toggle-hint {font-size: 12px;color: var(--gray-500);}
+
+        /* 系统切换按钮组 */
+        .system-switch-group {
+            display: flex;
+            gap: 8px;
+        }
+        .system-btn {
+            padding: 8px 20px;
+            border: 1px solid var(--gray-200);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--gray-600);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+        }
+        .system-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(22,93,255,0.04);
+        }
+        .system-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .system-btn i {
+            font-size: 16px;
+        }
+        /* 渠道参数配置 */
+        .sub-channel-section {margin-top: 8px;padding: 16px;background: var(--gray-50);border: 1px solid var(--gray-200);border-radius: 10px;display: none;}
+        .sub-channel-section.show {display: block;}
+        .sub-channel-row {display: flex;align-items: center;gap: 12px;margin-bottom: 10px;}
+        .sub-channel-row:last-child {margin-bottom: 0;}
+        .sub-channel-label {font-size: 13px;color: var(--gray-600);white-space: nowrap;min-width: 70px;font-weight: 500;}
+        .sub-channel-input {flex: 1;height: 38px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;background: white;}
+        .sub-channel-input:focus {outline: none;border-color: var(--primary);}
+        .sub-channel-del {width: 32px;height: 32px;border: 1px solid var(--gray-200);background: white;border-radius: 6px;cursor: pointer;display: flex;align-items: center;justify-content: center;color: var(--danger);font-size: 16px;transition: all 0.2s;flex-shrink: 0;}
+        .sub-channel-del:hover {background: #FEF2F2;border-color: var(--danger);}
+        .sub-channel-del:disabled {opacity: 0.3;cursor: not-allowed;}
+        .sub-channel-add {display: inline-flex;align-items: center;gap: 4px;padding: 6px 16px;border: 1px dashed var(--primary);background: transparent;color: var(--primary);border-radius: 8px;cursor: pointer;font-size: 13px;transition: all 0.2s;margin-top: 6px;}
+        .sub-channel-add:hover {background: rgba(22,93,255,0.04);}
+        /* 所属平台选择器 */
+        .platform-selector {display: flex;align-items: center;gap: 12px;padding: 12px 24px;background: linear-gradient(135deg, rgba(22,93,255,0.04), rgba(22,93,255,0.01));border-bottom: 1px solid var(--gray-200);}
+        .platform-selector-label {font-size: 14px;font-weight: 500;color: var(--gray-600);white-space: nowrap;}
+        .platform-selector-value {font-size: 15px;font-weight: 600;color: var(--primary);cursor: pointer;padding: 4px 12px;border: 1px dashed var(--primary);border-radius: 8px;transition: all 0.2s;}
+        .platform-selector-value:hover {background: rgba(22,93,255,0.06);}
+        .platform-selector-value.empty {color: var(--gray-600);font-weight: 400;border-color: var(--gray-300);}
+        .platform-selector-value.empty:hover {border-color: var(--primary);color: var(--primary);}
+        .platform-selector-btn {padding: 6px 16px;border: 1px solid var(--gray-200);background: white;border-radius: 6px;cursor: pointer;font-size: 13px;color: var(--gray-600);transition: all 0.2s;}
+        .platform-selector-btn:hover {border-color: var(--primary);color: var(--primary);}
+        /* 平台选择弹窗列表 */
+        .platform-select-modal {width: 980px;max-height: 85vh;display: flex;flex-direction: column;}
+        .platform-select-modal .modal-body {flex:1;overflow:hidden;display:flex;flex-direction:column;}
+        .platform-select-table {width:100%;border-collapse:collapse;table-layout:fixed;}
+        .platform-select-table th {padding:10px 8px;background:var(--gray-100);font-weight:500;text-align:left;font-size:13px;border-bottom:1px solid var(--gray-200);white-space:nowrap;position:sticky;top:0;z-index:1;}
+        .platform-select-table td {padding:10px 8px;border-bottom:1px solid var(--gray-200);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        .platform-select-table .col-id {width:60px;}
+        .platform-select-table .col-name {width:110px;}
+        .platform-select-table .col-company {width:150px;}
+        .platform-select-table .col-legal {width:65px;}
+        .platform-select-table .col-valid {width:90px;}
+        .platform-select-table .col-operator {width:65px;}
+        .platform-select-table .col-time {width:130px;}
+        .platform-select-table .col-action {width:100px;}
+        .ps-select-btn {padding: 4px 16px;border: 1px solid var(--primary);background: white;color: var(--primary);border-radius: 6px;cursor: pointer;font-size: 13px;transition: all 0.2s;white-space: nowrap;}
+        .ps-select-btn:hover {background: rgba(22,93,255,0.04);}
+        .ps-select-btn.selected {background: var(--danger);color: white;border-color: var(--danger);}
+        .ps-select-btn.selected:hover {background: #D92B2B;}
+        /* 旧的平台选择列表样式移除 */
+        .platform-select-item {display: none;}
+        .platform-select-item .name {display: none;}
+        .platform-select-item .status {display: none;}
+        .channel-list-container {flex: 1;overflow-y: auto;padding: 8px 0;}
+        .channel-list-header {display: grid;grid-template-columns: 50px 1fr 1fr;padding: 12px 24px;background: var(--gray-100);font-size: 13px;font-weight: 600;color: var(--gray-600);position: sticky;top: 0;z-index: 1;}
+        .channel-item {display: grid;grid-template-columns: 50px 1fr 1fr;padding: 14px 24px;align-items: center;border-bottom: 1px solid var(--gray-100);transition: all 0.2s;cursor: pointer;}
+        .channel-item:hover {background: rgba(22,93,255,0.03);}
+        .channel-item.selected {background: rgba(22,93,255,0.08);}
+        .channel-checkbox {width: 18px;height: 18px;accent-color: var(--primary);cursor: pointer;}
+        .channel-platform {font-size: 14px;color: var(--gray-900);}
+        .channel-account {font-size: 14px;color: var(--gray-600);}
+        .channel-empty {text-align: center;padding: 40px;color: var(--gray-600);font-size: 14px;}
+        .channel-pagination {padding: 12px 24px;border-top: 1px solid var(--gray-200);display: flex;justify-content: center;align-items: center;gap: 8px;}
+        .channel-pagination button {padding: 6px 12px;border: 1px solid var(--gray-200);background: white;border-radius: 6px;cursor: pointer;font-size: 13px;transition: all 0.2s;}
+        .channel-pagination button:hover {border-color: var(--primary);color: var(--primary);}
+        .channel-pagination button:disabled {opacity: 0.5;cursor: not-allowed;}
+        .channel-pagination button.active {background: var(--primary);color: white;border-color: var(--primary);}
+        .channel-pagination span {font-size: 13px;color: var(--gray-600);}
+        .channel-footer {padding: 16px 24px;border-top: 1px solid var(--gray-200);display: flex;justify-content: flex-end;align-items: center;gap: 12px;}
+        /* 原型说明浮窗 */
+        .proto-fab {position: fixed;top: 260px;right: 20px;width: 64px;height: 64px;border-radius: 14px;background: var(--primary);color: white;border: none;cursor: grab;display: grid;grid-template-columns: 1fr 1fr;place-items: center;font-size: 15px;font-weight: 600;box-shadow: 0 4px 20px rgba(22,93,255,0.4);z-index: 10000;transition: box-shadow 0.25s;user-select: none;line-height: 1;padding: 6px;}
+        .proto-fab:hover {box-shadow: 0 6px 28px rgba(22,93,255,0.5);}
+        .proto-fab:active {cursor: grabbing;}
+        .proto-drawer-overlay {position: fixed;inset: 0;background: rgba(0,0,0,0.4);z-index: 9998;display: none;transition: opacity 0.3s;}
+        .proto-drawer-overlay.show {display: block;}
+        .proto-drawer {position: fixed;top: 0;right: 0;bottom: 0;width: 880px;max-width: 95vw;background: white;z-index: 9999;box-shadow: -4px 0 32px rgba(0,0,0,0.15);transform: translateX(100%);transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);display: flex;flex-direction: column;}
+        .proto-drawer.show {transform: translateX(0);}
+        .proto-drawer-header {display: flex;align-items: center;justify-content: space-between;padding: 22px 36px;border-bottom: 1px solid var(--gray-200);flex-shrink: 0;}
+        .proto-drawer-title {font-size: 20px;font-weight: 600;color: var(--gray-900);display: flex;align-items: center;gap: 12px;}
+        .proto-drawer-title i {color: var(--primary);font-size: 22px;}
+        .proto-drawer-close {width: 40px;height: 40px;border: none;background: var(--gray-100);border-radius: 10px;cursor: pointer;display: flex;align-items: center;justify-content: center;font-size: 20px;color: var(--gray-600);transition: all 0.2s;}
+        .proto-drawer-close:hover {background: var(--gray-200);color: var(--gray-900);}
+        .proto-drawer-body {flex: 1;overflow-y: auto;padding: 32px 36px;}
+        .proto-panel {display: none;}
+        .proto-panel.show {display: block;}
+        .proto-section {margin-bottom: 28px;}
+        .proto-section:last-child {margin-bottom: 0;}
+        .proto-section-title {font-size: 16px;font-weight: 600;color: var(--gray-900);margin-bottom: 12px;display: flex;align-items: center;gap: 10px;}
+        .proto-section-title:before {content:'';width: 4px;height: 18px;background: var(--primary);border-radius: 2px;flex-shrink: 0;}
+        .proto-flow {display: flex;flex-wrap: wrap;gap: 10px;margin-bottom: 8px;}
+        .proto-step {display: flex;align-items: center;gap: 6px;font-size: 14px;color: var(--gray-600);background: var(--gray-100);padding: 7px 14px;border-radius: 20px;}
+        .proto-step-num {width: 22px;height: 22px;background: var(--primary);color: white;border-radius: 50%;display: flex;align-items: center;justify-content: center;font-size: 12px;font-weight: 600;flex-shrink: 0;}
+        .proto-arrow {color: var(--gray-400);font-size: 14px;display: flex;align-items: center;}
+        .proto-text {font-size: 14px;color: var(--gray-600);line-height: 1.9;}
+        .proto-text strong {color: var(--gray-900);font-weight: 500;}
+        .proto-tag {display: inline-block;padding: 3px 10px;border-radius: 4px;font-size: 12px;margin-right: 4px;margin-bottom: 4px;}
+        .proto-tag.required {background: #FEF2F2;color: var(--danger);font-weight: 500;}
+        .proto-tag.optional {background: #E8F3FF;color: var(--primary);font-weight: 500;}
+        .proto-field {display: flex;justify-content: space-between;align-items: flex-start;gap: 20px;padding: 10px 0;border-bottom: 1px solid var(--gray-100);font-size: 14px;}
+        .proto-field:last-child {border-bottom: none;}
+        .proto-field-name {color: var(--gray-900);font-weight: 500;flex-shrink: 0;white-space: nowrap;}
+        .proto-field-desc {color: var(--gray-600);text-align: right;max-width: 58%;}
+        .proto-table {width:100%;border-collapse:collapse;margin:10px 0 0;font-size:13px;}
+        .proto-table th {background:var(--gray-100);color:var(--gray-700);font-weight:600;padding:8px 12px;text-align:left;border:1px solid var(--gray-200);}
+        .proto-table td {padding:8px 12px;border:1px solid var(--gray-200);color:var(--gray-700);}
+        .proto-table tr:nth-child(even) td {background:var(--gray-50);}
+    </style>
+</head>
+<body>
+    <div id="mainPage">
+        <main class="content">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="tabs" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="tab active">重新分包</div>
+                            <div class="system-switch-group">
+                                <button type="button" class="system-btn active" data-system="android" onclick="switchSystem('android')">
+                                    <i class="fa fa-android" style="margin-right: 6px;"></i>Android
+                                </button>
+                                <button type="button" class="system-btn" data-system="ios" onclick="switchSystem('ios')">
+                                    <i class="fa fa-apple" style="margin-right: 6px;"></i>iOS
+                                </button>
+                                <button type="button" class="system-btn" data-system="pc" onclick="switchSystem('pc')">
+                                    <i class="fa fa-desktop" style="margin-right: 6px;"></i>PC端
+                                </button>
+                            </div>
+                        </div>
+                        <form id="repkgForm">
+                            <input type="hidden" id="selectedPlatformId" value="">
+                            <input type="hidden" id="companyId" value="">
+                            <input type="hidden" id="companyName" value="">
+                            <div class="section-divider"><span>基础信息</span></div>
+                            <!-- 所属企业（重新分包禁止修改） -->
+                            <div class="form-row">
+                                <div class="form-row-label">所属企业 <span class="required">*</span></div>
+                                <div class="form-row-body">
+                                    <div class="form-input" id="selectedPlatformDisplay" style="display:flex;align-items:center;color:var(--gray-600);user-select:none;line-height:40px;background:var(--gray-100);cursor:not-allowed;">自动读取原分包所属企业</div>
+                                </div>
+                            </div>
+                            <!-- 选择母包 -->
+                            <div class="form-row">
+                                <div class="form-row-label">选择母包 <span class="required">*</span></div>
+                                <div class="form-row-body">
+                                    <div class="form-input" id="gameDisplay" style="display:flex;align-items:center;color:var(--gray-600);line-height:40px;background:var(--gray-100);cursor:not-allowed;">读取已有分包数据</div>
+                                    <input type="hidden" id="selectedGameId" value="">
+                                </div>
+                            </div>
+                            <!-- 游戏名称 -->
+                            <div class="form-row">
+                                <div class="form-row-label">游戏名称 <span class="required">*</span></div>
+                                <div class="form-row-body">
+                                    <input type="text" id="gameName" class="form-input" placeholder="上传母包后自动解析" readonly style="color:var(--gray-600);">
+                                </div>
+                            </div>
+                            <!-- 系统类型 -->
+                            <div class="form-row">
+                                <div class="form-row-label">系统类型 <i class="fa fa-lock" style="color:var(--gray-600);font-size:11px;margin-left:4px;"></i></div>
+                                <div class="form-row-body">
+                                    <div class="form-input" id="systemTypeDisplay" style="display:flex;align-items:center;background:var(--gray-100);color:var(--gray-600);line-height:40px;cursor:not-allowed;user-select:none;">选择母包后自动显示</div>
+                                    <input type="hidden" id="systemType" value="Android">
+                                </div>
+                            </div>
+                            <!-- 游戏处理模式 -->
+                            <div class="form-row">
+                                <div class="form-row-label">游戏处理模式</div>
+                                <div class="form-row-body">
+                                    <div class="form-input" style="display:flex;align-items:center;background:var(--gray-100);color:var(--gray-600);line-height:40px;">分包模式</div>
+                                </div>
+                            </div>
+                            <!-- 游戏屏幕方向（根据所选游戏显示，无法修改） -->
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">游戏屏幕方向</div>
+                                <div class="form-row-body">
+                                    <input type="text" id="gcreenOrientation" class="form-input" placeholder="选择母包后自动显示" readonly style="color:var(--gray-600);background:var(--gray-100);">
+                                </div>
+                            </div>
+                            <!-- 游戏聚合类型 -->
+                            <div class="form-row" data-systems="android,pc">
+                                <div class="form-row-label">游戏聚合类型</div>
+                                <div class="form-row-body">
+                                    <select id="gameAggregationType" class="form-input">
+                                        <option value="">请选择游戏聚合类型</option>
+                                        <option value="RPG">RPG</option>
+                                        <option value="SLG">SLG</option>
+                                        <option value="CARD">卡牌</option>
+                                        <option value="CASUAL">休闲</option>
+                                        <option value="MMO">MMO</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- 游戏包名 -->
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">是否修改游戏包名</div>
+                                <div class="form-row-body">
+                                    <select id="isModifyBasePackname" class="form-input" onchange="toggleBasePackname()">
+                                        <option value="false" selected>否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">游戏包名 <span class="required">*</span></div>
+                                <div class="form-row-body">
+                                    <input type="text" id="packageName" class="form-input" placeholder="游戏包名（解包自动解析）" disabled style="color:var(--gray-600);">
+                                </div>
+                            </div>
+                            <!-- 游戏参数 -->
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">游戏参数</div>
+                                <div class="form-row-body">
+                                    <input type="text" id="gameParams" class="form-input" placeholder="游戏参数（解包自动解析）" disabled style="color:var(--gray-600);margin-bottom:12px;">
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                        <div>
+                                            <div style="font-size:12px;color:var(--gray-600);margin-bottom:4px;">access_key</div>
+                                            <input type="text" class="form-input" value="ak_cqsjh5_202406" disabled>
+                                        </div>
+                                        <div>
+                                            <div style="font-size:12px;color:var(--gray-600);margin-bottom:4px;">domain_url</div>
+                                            <input type="text" class="form-input" value="https://game.legend.world" disabled>
+                                        </div>
+                                        <div>
+                                            <div style="font-size:12px;color:var(--gray-600);margin-bottom:4px;">game_channel_id</div>
+                                            <input type="text" class="form-input" value="gc_cqsjh5_001" disabled>
+                                        </div>
+                                        <div>
+                                            <div style="font-size:12px;color:var(--gray-600);margin-bottom:4px;">game_app_id</div>
+                                            <input type="text" class="form-input" value="app_cqsjh5_888" disabled>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 游戏配置 -->
+                            <div class="section-divider" data-systems="android,ios"><span>游戏配置</span></div>
+                            <!-- 是否修改游戏Logo（由新增游戏时设置，此处仅读取） -->
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">是否修改游戏Logo</div>
+                                <div class="form-row-body">
+                                    <select id="isModifyGameLogo" class="form-input" disabled style="background:var(--gray-100);color:var(--gray-600);">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                    <div style="font-size:12px;color:var(--gray-600);margin-top:4px;">根据所选母包自动读取，不可修改</div>
+                                </div>
+                            </div>
+                            <!-- 游戏Logo（选择"是"时显示，根据所选游戏读取，无法修改） -->
+                            <div class="form-row" data-systems="android,ios" id="logoUploadRow" style="display:none;">
+                                <div class="form-row-label">游戏Logo</div>
+                                <div class="form-row-body">
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <div style="width:48px;height:48px;border:1px solid var(--gray-200);border-radius:6px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;overflow:hidden;" id="gameLogoPreview">
+                                            <span style="color:var(--gray-400);font-size:12px;">Logo</span>
+                                        </div>
+                                        <span style="font-size:13px;color:var(--gray-600);" id="gameLogoFileName">选择母包后自动显示</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 是否修改targetSdkVersion版本 -->
+                            <div class="form-row" data-systems="android">
+                                <div class="form-row-label">是否修改targetSdkVersion版本</div>
+                                <div class="form-row-body">
+                                    <select id="isModifyTargetSdkVersion" class="form-input" onchange="toggleTargetSdkVersion()">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-indent" data-systems="android">
+                                <!-- targetSdkVersion版本 -->
+                                <div class="form-row" id="targetSdkVersionRow" style="display:none;">
+                                    <div class="form-row-label">版本号</div>
+                                    <div class="form-row-body">
+                                        <input type="text" id="targetSdkVersionValue" class="form-input" placeholder="如: 33">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 是否存在OAID证书（由新增游戏时上传，此处仅读取） -->
+                            <div class="form-row" data-systems="android">
+                                <div class="form-row-label">是否存在OAID证书</div>
+                                <div class="form-row-body">
+                                    <select id="isExistOaidCert" class="form-input" disabled style="background:var(--gray-100);color:var(--gray-600);">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                    <div style="font-size:12px;color:var(--gray-600);margin-top:4px;">根据所选母包自动读取，不可修改</div>
+                                </div>
+                            </div>
+                            <!-- OAID证书文件（选择"是"时显示，只读，来源：新增游戏时上传） -->
+                            <div class="form-row" data-systems="android" id="oaidCertSection" style="display:none;">
+                                <div class="form-row-label">OAID证书</div>
+                                <div class="form-row-body">
+                                    <div class="v3-sign-container">
+                                        <div class="v3-sign-file-info show" id="oaidCertFileInfo">
+                                            <i class="fa fa-file-text-o" style="font-size:24px;color:var(--primary);"></i>
+                                            <div class="file-details">
+                                                <div class="file-name" id="oaidCertFileName">选择母包后自动显示</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- iOS专属配置 -->
+                            <div class="section-divider" data-systems="ios"><span>iOS专属配置</span></div>
+                            <!-- 配置CFBundleURLTypes -->
+                            <div class="form-row" data-systems="ios">
+                                <div class="form-row-label">配置CFBundleURLTypes</div>
+                                <div class="form-row-body" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
+                                    <select id="isConfigCFBundleURLTypes" class="form-input" onchange="togglePackField('isConfigCFBundleURLTypes','cfBundleSection');toggleCFBundleAddBtn()" style="flex:1;min-width:0;">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                    <button type="button" class="btn btn-sm btn-primary" id="cfBundleAddBtn" onclick="addCFBundleGroup()" style="display:none;white-space:nowrap;">新增</button>
+                                </div>
+                            </div>
+                            <div class="form-indent" data-systems="ios" id="cfBundleSection" style="display:none;">
+                                <div id="cfBundleGroups">
+                                    <div class="cf-bundle-group" data-group="0" style="margin-bottom:12px;padding:14px;background:var(--gray-100);border-radius:8px;position:relative;">
+                                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                                            <div style="font-size:13px;font-weight:600;color:var(--gray-900);">配置组 1</div>
+                                            <button type="button" class="cf-del-btn" onclick="removeCFBundleGroup(0)" title="删除此组" style="width:24px;height:24px;border:none;background:transparent;color:var(--gray-600);cursor:pointer;border-radius:4px;font-size:16px;line-height:1;">×</button>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-row-label">URL identifier1</div>
+                                            <div class="form-row-body">
+                                                <input type="text" class="form-input" placeholder="如: weixin">
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-row-label">CFBundleURLTypes1内容数组</div>
+                                            <div class="form-row-body">
+                                                <input type="text" class="form-input" placeholder='如: ["37WANSDk.com.yougui","fingleSdk.com.yougui"]'>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 配置LSApplicationQueriesSchemes -->
+                            <div class="form-row" data-systems="ios">
+                                <div class="form-row-label">配置LSApplicationQueriesSchemes</div>
+                                <div class="form-row-body">
+                                    <select id="isConfigLSAppQueriesSchemes" class="form-input" onchange="togglePackField('isConfigLSAppQueriesSchemes','lsSchemeSection')">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-indent" data-systems="ios" id="lsSchemeSection" style="display:none;">
+                                <div class="form-row">
+                                    <div class="form-row-label">LSApplicationQueriesSchemes内容数组</div>
+                                    <div class="form-row-body">
+                                        <input type="text" class="form-input" placeholder='如: ["QQ41C2A838","alicrpay"]'>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 渠道与联运配置 -->
+                            <div class="section-divider"><span>渠道与联运配置</span></div>
+                            <div class="section-divider"><span>打包参数配置</span></div>
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">是否修改游戏包名</div>
+                                <div class="form-row-body">
+                                    <select id="isModifyGamePackname" class="form-input" onchange="togglePackField('isModifyGamePackname','gameNewPackname')">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-indent" data-systems="android,ios" id="gameNewPackname" style="display:none;">
+                                <div class="form-row" data-systems="android,ios">
+                                    <div class="form-row-label">新游戏包名</div>
+                                    <div class="form-row-body">
+                                        <input type="text" class="form-input" placeholder="如: com.newgame.chang">
+                                    </div>
+                                </div>
+                                <div class="form-row" data-systems="android,ios">
+                                    <div class="form-row-label">包名修改范围</div>
+                                    <div class="form-row-body">
+                                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px;font-size:13px;">
+                                            <label style="cursor:pointer;"><input type="checkbox" value="activity" style="margin-right:4px;"> 修改Activity</label>
+                                            <label style="cursor:pointer;"><input type="checkbox" value="service" style="margin-right:4px;" checked> 修改Service</label>
+                                            <label style="cursor:pointer;"><input type="checkbox" value="application" style="margin-right:4px;"> 修改Application</label>
+                                            <label style="cursor:pointer;"><input type="checkbox" value="receiver" style="margin-right:4px;" checked> 修改Receiver</label>
+                                            <label style="cursor:pointer;"><input type="checkbox" value="permission" style="margin-right:4px;" checked> 修改Permission</label>
+                                            <label style="cursor:pointer;"><input type="checkbox" value="provider" style="margin-right:4px;" checked> 修改Provider</label>
+                                            <label style="cursor:pointer;"><input type="checkbox" value="activity-alias" style="margin-right:4px;" checked> 修改activity-alias</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">是否修改游戏安装名</div>
+                                <div class="form-row-body">
+                                    <select id="isModifyGameInstallName" class="form-input" onchange="togglePackField('isModifyGameInstallName','gameNewInstallName')">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-indent" data-systems="android,ios">
+                                <div class="form-row" data-systems="android,ios" id="gameNewInstallName" style="display:none;">
+                                    <div class="form-row-label">新游戏安装名</div>
+                                    <div class="form-row-body">
+                                        <input type="text" class="form-input" placeholder="如: 新传奇世界">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">是否修改游戏Icon</div>
+                                <div class="form-row-body">
+                                    <select id="isModifyGameIcon" class="form-input" onchange="togglePackField('isModifyGameIcon','gameNewIconPath')">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-indent">
+                                <div class="form-row" id="gameNewIconPath" style="display:none;">
+                                    <div class="form-row-label">新Icon文件</div>
+                                    <div class="form-row-body">
+                                        <div class="v3-sign-upload" onclick="document.getElementById('packIconInput').click()">
+                                            <i class="fa fa-picture-o"></i>
+                                            <p>点击上传新Icon</p>
+                                            <input type="file" id="packIconInput" accept="image/*" style="display:none;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">是否修改游戏版本</div>
+                                <div class="form-row-body">
+                                    <select id="isModifyGameVersion" class="form-input" onchange="togglePackField('isModifyGameVersion','gameVersionGroup')">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-indent" id="gameVersionGroup" style="display:none;">
+                                <div class="form-row">
+                                    <div class="form-row-label">VersionName</div>
+                                    <div class="form-row-body"><input type="text" class="form-input" placeholder="如: 1.0.1"></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-row-label">VersionCode</div>
+                                    <div class="form-row-body"><input type="text" class="form-input" placeholder="如: 101"></div>
+                                </div>
+                            </div>
+
+                            <!-- 渠道与存储配置 -->
+                            <div class="form-row">
+                                <div class="form-row-label">联运申请ID <span class="required">*</span></div>
+                                <div class="form-row-body">
+                                    <input type="text" id="unionId" class="form-input" placeholder="请输入联运游戏ID">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-row-label">选择渠道 <span class="required">*</span></div>
+                                <div class="form-row-body">
+                                    <div class="form-input" id="channelDisplay" onclick="openChannelSelectModal()" style="display:flex;align-items:center;cursor:pointer;color:var(--gray-600);user-select:none;line-height:40px;">点击选择关联渠道</div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="selectedChannelIds" value="">
+                            <!-- 打包参数配置 -->
+                            <div class="section-divider" data-systems="android,ios"><span>渠道与存储配置</span></div>
+                            <!-- 是否要先授权 -->
+                            <div class="form-row" data-systems="android">
+                                <div class="form-row-label">是否要先授权</div>
+                                <div class="form-row-body">
+                                    <select id="isExecuteAuthorization" class="form-input" onchange="togglePackField('isExecuteAuthorization','authSection')">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- Smali处理模式 -->
+                            <div class="form-row" data-systems="android">
+                                <div class="form-row-label">是否修改Smali处理模式</div>
+                                <div class="form-row-body">
+                                    <select id="isModifySmaliMerge" class="form-input" onchange="togglePackField('isModifySmaliMerge','smaliMergeSection')">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-indent" data-systems="android,ios">
+                                <div class="form-row" data-systems="android,ios" id="smaliMergeSection" style="display:none;">
+                                    <div class="form-row-label">Smali处理模式</div>
+                                    <div class="form-row-body">
+                                        <select id="smaliResourcesMergeMode" class="form-input">
+                                            <option value="CHANNEL_PRIORITY" selected>渠道资源优先</option>
+                                            <option value="Games_PRIORITY">游戏资源优先</option>
+                                            
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Res处理模式 -->
+                            <div class="form-row" data-systems="android">
+                                <div class="form-row-label">是否修改Res处理模式</div>
+                                <div class="form-row-body">
+                                    <select id="isModifyResMerge" class="form-input" onchange="togglePackField('isModifyResMerge','resMergeSection')">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-indent" data-systems="android,ios">
+                                <div class="form-row" data-systems="android,ios" id="resMergeSection" style="display:none;">
+                                    <div class="form-row-label">Res处理模式</div>
+                                    <div class="form-row-body">
+                                        <select id="resResourcesMergeMode" class="form-input">
+                                            <option value="CHANNEL_PRIORITY" selected>渠道资源优先</option>
+                                            <option value="Games_PRIORITY">游戏资源优先</option>
+                                            
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 渠道出包资源Id -->
+                            <div class="form-row">
+                                <div class="form-row-label">渠道出包资源Id</div>
+                                <div class="form-row-body">
+                                    <div class="form-input" id="channelPackResId" onclick="openPackResModal()" style="display:flex;align-items:center;cursor:pointer;color:var(--gray-600);user-select:none;line-height:40px;transition:all 0.2s;">选择渠道后自动填充，点击可修改</div>
+                                </div>
+                            </div>
+                            <!-- 子渠道参数配置 -->
+                            <div class="form-row">
+                                <div class="form-row-label">子渠道参数配置</div>
+                                <div class="form-row-body">
+                                    <div class="form-input" onclick="openSubChannelConfig()" style="display:flex;align-items:center;cursor:pointer;color:var(--gray-600);line-height:40px;">点击配置AppId/AppKey</div>
+                                </div>
+                            </div>
+                            <!-- 渠道名称 -->
+                            <div class="form-row">
+                                <div class="form-row-label">渠道名称</div>
+                                <div class="form-row-body">
+                                    <input type="text" id="channelName" class="form-input" placeholder="渠道名称（选择渠道后自动填充）" readonly style="color:var(--gray-600);">
+                                </div>
+                            </div>
+                            <!-- 渠道出包版本号 -->
+                            <div class="form-row">
+                                <div class="form-row-label">渠道出包版本号</div>
+                                <div class="form-row-body">
+                                    <input type="text" id="channelPackVersion" class="form-input" placeholder="请输入渠道出包版本号">
+                                </div>
+                            </div>
+                            <!-- 是否修改推广标识 -->
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">是否修改推广标识</div>
+                                <div class="form-row-body">
+                                    <select id="isModifyPromotionId" class="form-input">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- 游戏盒子归属标识 -->
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">游戏盒子归属标识</div>
+                                <div class="form-row-body">
+                                    <input type="text" id="gameBoxAttributionId" class="form-input" placeholder="游戏盒子归属标识">
+                                </div>
+                            </div>
+                            <!-- 游戏包签名方式 -->
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">游戏包签名方式</div>
+                                <div class="form-row-body">
+                                    <select id="gameSignType" class="form-input">
+                                        <option value="V1">V1</option>
+                                        <option value="V2">V2</option>
+                                        <option value="V3">V3</option>
+                                        <option value="V4">V4</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- 是否隐藏闪屏页Logo -->
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">是否隐藏闪屏页Logo</div>
+                                <div class="form-row-body">
+                                    <select id="isHideSplashLogo" class="form-input">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- 开启Debug模式 -->
+                            <div class="form-row" data-systems="android,ios">
+                                <div class="form-row-label">开启Debug模式</div>
+                                <div class="form-row-body">
+                                    <select id="isDebug" class="form-input">
+                                        <option value="false">否</option>
+                                        <option value="true">是</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- 提交按钮 -->
+                            <div class="form-row" style="margin-top: 24px;">
+                                <div class="form-row-label"></div>
+                                <div class="form-row-body" style="display:flex;gap:12px;justify-content:flex-end;">
+                                    <button type="button" class="btn btn-default" onclick="window.location.href='分包列表.html'">取消</button>
+                                    <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> 保存</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </main>
+    </div>
+
+    <!-- 母包选择弹窗 -->
+    <div class="modal-overlay" id="gameSelectModal">
+        <div class="modal" style="width:780px;max-width:95vw;">
+            <div class="modal-header">
+                <div class="modal-title">选择母包</div>
+                <button class="modal-close" onclick="closeGameSelectModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:20px 24px;max-height:450px;overflow-y:auto;">
+                <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+                    <input type="text" class="form-input" id="gameSearchName" placeholder="搜索游戏名称" oninput="renderGameTable()" style="flex:1;min-width:140px;height:36px;font-size:13px;">
+                    <input type="text" class="form-input" id="gameSearchPackage" placeholder="搜索包名" oninput="renderGameTable()" style="flex:1;min-width:140px;height:36px;font-size:13px;">
+                    <select class="form-input" id="gameSearchType" onchange="renderGameTable()" style="width:120px;height:36px;font-size:13px;flex-shrink:0;">
+                        <option value="">全部类型</option>
+                        <option value="Android">Android</option>
+                        <option value="iOS">iOS</option>
+                        <option value="Windows">PC端</option>
+                    </select>
+                </div>
+                <table class="table">
+                    <thead><tr><th style="width:60px;">编号</th><th>游戏名称</th><th style="width:100px;">系统类型</th><th>包名</th><th style="width:70px;">操作</th></tr></thead>
+                    <tbody id="gameSelectTableBody"></tbody>
+                </table>
+                <div id="gameSelectEmpty" style="text-align:center;padding:40px;color:var(--gray-600);display:none;">暂无可选母包</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeGameSelectModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提交确认弹窗 -->
+    <div class="modal-overlay" id="submitModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">确认保存</div>
+                <button class="modal-close" onclick="closeSubmitModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon"><i class="fa fa-check-circle-o"></i></div>
+                <div class="confirm-message">确定要保存游戏信息吗？</div>
+                <div class="confirm-desc">保存后将添加到母包列表</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeSubmitModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmSubmit()">确认保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 渠道选择弹窗 -->
+    <div class="modal-overlay" id="channelModal">
+        <div class="modal channel-modal">
+            <div class="modal-header">
+                <div class="modal-title">选择渠道</div>
+                <button class="modal-close" onclick="closeChannelModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="channel-search">
+                    <div class="channel-search-wrapper">
+                        <input type="text" class="form-input" id="channelSearchInput" placeholder="搜索渠道名称/账号" oninput="filterChannels()" style="width:200px;height:36px;font-size:13px;flex-shrink:0;">
+                        <div class="platform-filter-wrapper" id="platformFilterWrapper">
+                            <button class="platform-filter-btn" onclick="togglePlatformDropdown()" id="platformFilterBtn">
+                                <span id="platformFilterText">所属平台</span>
+                                <i class="fa fa-chevron-down"></i>
+                            </button>
+                            <div class="platform-dropdown" id="platformDropdown">
+                                <div id="platformDropdownList"></div>
+                                <div class="platform-dropdown-footer">
+                                    <button onclick="clearPlatformFilter(event)">清空</button>
+                                    <button class="primary" onclick="applyPlatformFilter()">确定</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="platform-filter-wrapper" id="accountFilterWrapper">
+                            <button class="platform-filter-btn" onclick="toggleAccountDropdown()" id="accountFilterBtn">
+                                <span id="accountFilterText">渠道账号</span>
+                                <i class="fa fa-chevron-down"></i>
+                            </button>
+                            <div class="platform-dropdown" id="accountDropdown">
+                                <div id="accountDropdownList"></div>
+                                <div class="platform-dropdown-footer">
+                                    <button onclick="clearAccountFilter(event)">清空</button>
+                                    <button class="primary" onclick="applyAccountFilter()">确定</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="platform-selected-tags" id="platformSelectedTags"></div>
+                        <button class="channel-search-btn" onclick="filterChannels()">搜索</button>
+                    </div>
+                </div>
+                <div class="channel-selected-info">已选 <span id="channelCount">0</span> 个</div>
+                <div class="channel-list-container">
+                    <div class="channel-list-header">
+                        <div><input type="checkbox" id="channelSelectAll" class="channel-checkbox" onchange="toggleSelectAllChannels()"></div>
+                        <div>所属平台</div>
+                        <div>渠道账号</div>
+                    </div>
+                    <div id="channelList"></div>
+                </div>
+                <div class="channel-pagination" id="channelPagination"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeChannelModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmChannelSelection()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分包资源选择弹窗 -->
+    <div class="modal-overlay" id="packResModal">
+        <div class="modal" style="width:600px;max-width:95vw;">
+            <div class="modal-header">
+                <div class="modal-title">选择分包资源</div>
+                <button class="modal-close" onclick="closePackResModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:20px 24px;max-height:400px;overflow-y:auto;">
+                <div style="margin-bottom:12px;font-size:13px;color:var(--gray-600);">当前渠道：<strong id="packResChannelLabel">-</strong></div>
+                <table class="table">
+                    <thead><tr><th>资源ID</th><th>资源名称</th><th>版本</th><th>状态</th><th>操作</th></tr></thead>
+                    <tbody id="packResTableBody"></tbody>
+                </table>
+                <div id="packResEmpty" style="text-align:center;padding:40px;color:var(--gray-600);display:none;">请先选择渠道</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closePackResModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 平台选择弹窗（单选，表格样式） -->
+    <div class="modal-overlay" id="platformSelectModal2">
+        <div class="modal platform-select-modal">
+            <div class="modal-header">
+                <div class="modal-title">选择所属平台</div>
+                <button class="modal-close" onclick="closePlatformSelectModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:16px 24px;">
+                <!-- 搜索栏 -->
+                <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap;">
+                    <input type="text" class="form-input" id="ps_searchInput" placeholder="请输入平台名称搜索" style="width:200px;height:36px;font-size:13px;" oninput="renderPlatformSelectTable()">
+                    <button class="btn btn-sm btn-primary" onclick="renderPlatformSelectTable()"><i class="fa fa-search"></i> 搜索</button>
+                </div>
+                <!-- 表格 -->
+                <div style="overflow:auto;max-height:400px;">
+                    <table class="platform-select-table" id="ps_table">
+                        <thead>
+                            <tr>
+                                <th class="col-id">编号</th>
+                                <th class="col-name">平台名称</th>
+                                <th class="col-company">公司名称</th>
+                                <th class="col-legal">平台法人</th>
+                                <th class="col-valid">服务到期</th>
+                                <th class="col-operator">操作人</th>
+                                <th class="col-time">更新时间</th>
+                                <th class="col-action">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ps_tbody"></tbody>
+                    </table>
+                    <div id="ps_empty" style="display:none;text-align:center;padding:40px;color:var(--gray-600);">暂无匹配的平台</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="confirmPlatformSelect()">确定</button>
+                <button class="btn btn-default" onclick="closePlatformSelectModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="导航.js"></script>
+    <script src="common.js"></script>
+    <script>
+        // 游戏数据
+        const gameData = {
+            '传奇世界H5': { systemType: 'Android', gameName: '传奇世界H5' },
+            '消消乐': { systemType: 'Android', gameName: '消消乐' },
+            '三国志': { systemType: 'Android', gameName: '三国志' }
+        };
+
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Navigation && Navigation.init) {
+                Navigation.init('重新分包');
+            }
+            
+            // 检查登录
+            if (!UI.checkLogin()) return;
+            
+            // 检查游戏管理新增权限
+            if (!Permission.hasPageAccess('game') || !Permission.hasActionPermission('game', 'add')) {
+                UI.showMessage('error', '您没有访问该页面的权限');
+                window.location.href = '母包列表.html';
+                return;
+            }
+
+            // 初始化UI
+            UI.initUserInfo();
+            UI.initUserDropdown();
+            
+            // 绑定事件
+            // 初始化侧边栏菜单权限
+            // 初始化密钥别名下拉
+            initKeyAliasDropdown();
+
+            // 初始化系统类型字段显隐
+            switchSystem('android');
+
+            // 禁用顶部系统切换按钮（系统类型由母包决定）
+            document.querySelectorAll('.system-btn').forEach(function(btn) {
+                btn.style.pointerEvents = 'none';
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                btn.onclick = null;
+            });
+
+            // 禁用游戏聚合类型（由母包决定）
+            var aggTypeEl = document.getElementById('gameAggregationType');
+            if (aggTypeEl) {
+                aggTypeEl.disabled = true;
+                aggTypeEl.style.backgroundColor = '#F2F3F5';
+                aggTypeEl.style.cursor = 'not-allowed';
+            }
+
+            // 表单提交
+            document.getElementById('repkgForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const companyId = document.getElementById('companyId').value.trim();
+                const gameName = document.getElementById('gameName').value.trim();
+                const systemType = document.getElementById('systemType').value;
+                const packageName = document.getElementById('packageName').value.trim();
+                const selectedGameId = document.getElementById('selectedGameId').value;
+                
+                if (!companyId) { UI.showMessage('error', '请选择所属企业'); return; }
+                if (!selectedGameId) { UI.showMessage('error', '请选择母包'); return; }
+                if (!gameName) { UI.showMessage('error', '请输入游戏名称'); return; }
+                if (!systemType) { UI.showMessage('error', '请选择系统类型'); return; }
+                if (!packageName) { UI.showMessage('error', '请输入游戏包名'); return; }
+                
+                openSubmitModal();
+            });
+        });
+
+        // 初始化侧边栏菜单权限
+        function initMenuPermissions() {
+            // 系统管理菜单组
+            const systemMenuGroup = document.getElementById('menu-group-system');
+            if (systemMenuGroup && Permission.hasPageAccess('system')) {
+                systemMenuGroup.style.display = 'block';
+            }
+        }
+
+        // 上传游戏处理
+        function handleGameFileUpload(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // 显示文件信息，隐藏上传按钮
+                document.getElementById('gameUploadArea').style.display = 'none';
+                document.getElementById('gameFileInfo').classList.add('show');
+                document.getElementById('gameFileName').textContent = file.name;
+                document.getElementById('gameFileSize').textContent = formatFileSize(file.size);
+                
+                // 根据文件扩展名判断系统类型
+                const fileName = file.name.toLowerCase();
+                let systemType = '';
+                if (fileName.endsWith('.apk')) {
+                    systemType = 'ANDROID_SYS';
+                } else if (fileName.endsWith('.ipa')) {
+                    systemType = 'IOS_SYS';
+                }
+                
+                // 模拟解析游戏文件
+                setTimeout(() => {
+                    const gameInfo = {
+                        systemType: systemType,
+                        packageName: 'com.game.' + file.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().substring(0, 10),
+                        versionName: '1.0.0',
+                        targetSdkVersion: '33'
+                    };
+                    
+                    document.getElementById('systemType').value = gameInfo.systemType;
+                    document.getElementById('packageName').value = gameInfo.packageName;
+                    document.getElementById('targetSdkVersionValue').value = gameInfo.targetSdkVersion;
+                    
+                    UI.showMessage('success', '游戏母包解析成功');
+                }, 500);
+            }
+        }
+        
+        function removeGameFile() {
+            document.getElementById('gameFileInput').value = '';
+            
+            // 隐藏文件信息，显示上传按钮
+            document.getElementById('gameUploadArea').style.display = 'flex';
+            document.getElementById('gameFileInfo').classList.remove('show');
+            
+            // 清空游戏信息
+            document.getElementById('systemType').value = '';
+            document.getElementById('packageName').value = '';
+            document.getElementById('targetSdkVersionValue').value = '';
+        }
+        
+        // 上传ICON处理
+        function handleIconUpload(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 显示文件信息，隐藏上传按钮
+                    document.getElementById('iconUploadArea').style.display = 'none';
+                    document.getElementById('iconFileInfo').classList.add('show');
+                    document.getElementById('iconImg').src = e.target.result;
+                    document.getElementById('iconFileName').textContent = file.name;
+                    document.getElementById('iconFileSize').textContent = formatFileSize(file.size);
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function removeIcon() {
+            document.getElementById('iconInput').value = '';
+            
+            // 隐藏文件信息，显示上传按钮
+            document.getElementById('iconUploadArea').style.display = 'flex';
+            document.getElementById('iconFileInfo').classList.remove('show');
+        }
+
+        // LOGO 上传处理
+        function handleLogoUpload(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // 显示文件信息，隐藏上传区域
+                document.getElementById('logoUploadArea').style.display = 'none';
+                document.getElementById('logoFileInfo').classList.add('show');
+                document.getElementById('logoFileName').textContent = file.name;
+                document.getElementById('logoFileSize').textContent = formatFileSize(file.size);
+                
+                // 预览图片
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('logoPreviewImg').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeLogoFile() {
+            document.getElementById('logoFileInput').value = '';
+            document.getElementById('logoPreviewImg').src = '';
+            
+            // 隐藏文件信息，显示上传区域
+            document.getElementById('logoUploadArea').style.display = 'flex';
+            document.getElementById('logoFileInfo').classList.remove('show');
+        }
+        
+        // 签名上传处理
+        function handleSignUpload(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // 显示文件信息，隐藏上传按钮
+                document.getElementById('signUploadArea').style.display = 'none';
+                document.getElementById('signFileInfo').classList.add('show');
+                document.getElementById('signFileName').textContent = file.name;
+                document.getElementById('signFileSize').textContent = formatFileSize(file.size);
+                
+                // 模拟解析签名文件，获取密钥别名列表
+                const keyAliases = parseSignFile(file);
+                
+                // 显示密钥别名和密钥密码
+                showKeyFields(keyAliases);
+            }
+        }
+        
+        function removeSign() {
+            document.getElementById('signInput').value = '';
+            
+            // 隐藏文件信息，显示上传按钮
+            document.getElementById('signUploadArea').style.display = 'flex';
+            document.getElementById('signFileInfo').classList.remove('show');
+            
+            // 隐藏密钥别名和密钥密码
+            hideKeyFields();
+        }
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // 模拟解析签名文件
+        function parseSignFile(file) {
+            // 模拟返回空，因为现在是手动输入密钥别名
+            return [];
+        }
+        
+        // 显示密钥别名和密钥密码字段
+        function showKeyFields(aliases) {
+            const keyFieldsContainer = document.getElementById('keyFieldsContainer');
+            
+            // 显示整个容器，使用grid布局
+            keyFieldsContainer.style.display = 'grid';
+            
+            // 清除值
+            document.getElementById('keyAlias').value = '';
+            document.getElementById('keyPassword').value = '';
+            document.getElementById('keystorePassword').value = '';
+        }
+        
+        // 隐藏密钥别名和密钥密码字段
+        function hideKeyFields() {
+            const keyFieldsContainer = document.getElementById('keyFieldsContainer');
+            
+            // 始终显示密钥字段，不隐藏，使用grid布局
+            keyFieldsContainer.style.display = 'grid';
+            
+            // 清空值
+            document.getElementById('keyAlias').value = '';
+            document.getElementById('keyPassword').value = '';
+            document.getElementById('keystorePassword').value = '';
+        }
+        
+        // 初始化密钥别名下拉（已移除，现在是普通输入框）
+        function initKeyAliasDropdown() {
+            // 空实现
+        }
+
+        // ===== 渠道参数配置 =====
+        let subChannelParams = [];  // 存储各参数配置的值
+
+        function toggleSubChannel() {
+            const toggle = document.getElementById('subChannelToggle');
+            const section = document.getElementById('subChannelSection');
+            const hint = document.getElementById('subChannelHint');
+            
+            if (toggle.checked) {
+                section.classList.add('show');
+                hint.textContent = '已开启，请配置渠道参数';
+                // 开启时至少初始化一条
+                if (subChannelParams.length === 0) {
+                    subChannelParams.push('');
+                }
+                renderSubChannelRows();
+            } else {
+                section.classList.remove('show');
+                hint.textContent = '开启后可配置渠道参数';
+            }
+        }
+
+        function addSubChannelParam() {
+            subChannelParams.push('');
+            renderSubChannelRows();
+        }
+
+        function removeSubChannelParam(index) {
+            if (index < 0 || index >= subChannelParams.length) return;
+            // 最少保留1条
+            if (subChannelParams.length <= 1) {
+                UI.showMessage('warning', '至少需要保留一个参数配置');
+                return;
+            }
+            subChannelParams.splice(index, 1);
+            renderSubChannelRows();
+        }
+
+        function updateSubChannelParam(index, value) {
+            subChannelParams[index] = value;
+        }
+
+        // 重建DOM前，从当前DOM收集输入值到数组
+        function collectSubChannelInputs() {
+            const existingRows = document.querySelectorAll('#subChannelRows .sub-channel-row');
+            existingRows.forEach((row, i) => {
+                const input = row.querySelector('.sub-channel-input');
+                if (input && i < subChannelParams.length) {
+                    subChannelParams[i] = input.value;
+                }
+            });
+        }
+
+        function renderSubChannelRows() {
+            // 先保存当前正在编辑的输入框内容
+            collectSubChannelInputs();
+            
+            const container = document.getElementById('subChannelRows');
+            if (subChannelParams.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const isOnlyOne = subChannelParams.length <= 1;
+            container.innerHTML = subChannelParams.map((val, i) => `
+                <div class="sub-channel-row">
+                    <span class="sub-channel-label">参数配置${i + 1}</span>
+                    <input type="text" class="sub-channel-input"
+                        placeholder='例如:{"gameid":"112233"}'
+                        value="${val.replace(/"/g, '&quot;')}"
+                        onchange="updateSubChannelParam(${i}, this.value)">
+                    <button type="button" class="sub-channel-del"
+                        onclick="removeSubChannelParam(${i})"
+                        ${isOnlyOne ? 'disabled' : ''}
+                        title="${isOnlyOne ? '至少保留一个' : '删除'}">
+                        <i class="fa fa-trash-o"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        // 提交确认相关
+        function openSubmitModal() {
+            document.getElementById('submitModal').classList.add('show');
+        }
+        function closeSubmitModal() {
+            document.getElementById('submitModal').classList.remove('show');
+        }
+        function confirmSubmit() {
+            // 收集表单数据
+            const gameData = {
+                id: Date.now(),
+                companyId: document.getElementById('companyId').value.trim(),
+                companyName: document.getElementById('companyName').value.trim(),
+                name: document.getElementById('gameName').value.trim(),
+                systemType: document.getElementById('systemType').value,
+                gcreenOrientation: document.getElementById('gcreenOrientation').value,
+                gameAggregationType: document.getElementById('gameAggregationType').value.trim(),
+                packageName: document.getElementById('packageName').value.trim(),
+                gameParams: document.getElementById('gameParams').value.trim(),
+                isModifyGameLogo: document.getElementById('isModifyGameLogo').value === 'true',
+                logoSavePath: document.getElementById('gameLogoFileName').textContent || '',
+                isModifyTargetSdkVersion: document.getElementById('isModifyTargetSdkVersion').value === 'true',
+                targetSdkVersion: document.getElementById('targetSdkVersionValue').value.trim(),
+                createdAt: new Date().toISOString()
+            };
+
+            // 保存到 localStorage
+            const KEY = 'repkg_games';
+            const games = JSON.parse(localStorage.getItem(KEY) || '[]');
+            games.push(gameData);
+            localStorage.setItem(KEY, JSON.stringify(games));
+            console.log('保存游戏数据:', gameData);
+
+            closeSubmitModal();
+            UI.showMessage('success', '游戏添加成功');
+            setTimeout(() => {
+                window.location.href = '母包列表.html';
+            }, 1500);
+        }
+
+        // ===== GameInfoBean 联动函数 =====
+        function toggleGameLogoUpload() {
+            const v = document.getElementById('isModifyGameLogo').value === 'true';
+            document.getElementById('logoUploadRow').style.display = v ? '' : 'none';
+        }
+        function toggleTargetSdkVersion() {
+            const v = document.getElementById('isModifyTargetSdkVersion').value === 'true';
+            document.getElementById('targetSdkVersionRow').style.display = v ? '' : 'none';
+        }
+
+        function toggleBasePackname() {
+            const v = document.getElementById('isModifyBasePackname').value === 'true';
+            document.getElementById('packageName').disabled = !v;
+            document.getElementById('packageName').style.color = v ? 'var(--gray-900)' : 'var(--gray-600)';
+        }
+
+        // 系统切换时重新应用所有条件展开状态
+        function reapplyConditionalFields() {
+            // 安全调用 togglePackField，忽略已删除的元素
+            function safeToggle(fid, tid) {
+                var f = document.getElementById(fid);
+                var t = document.getElementById(tid);
+                if (!f || !t) return;
+                t.style.display = f.value === 'true' ? '' : 'none';
+            }
+            safeToggle('isModifyGamePackname','gameNewPackname');
+            safeToggle('isModifyGameInstallName','gameNewInstallName');
+            safeToggle('isModifyGameIcon','gameNewIconPath');
+            safeToggle('isModifyGameVersion','gameVersionGroup');
+            safeToggle('isExecuteAuthorization','authSection');
+            safeToggle('isModifySmaliMerge','smaliMergeSection');
+            safeToggle('isModifyResMerge','resMergeSection');
+            safeToggle('isExistOaidCert','oaidCertSection');
+            // Logo toggle handled separately by toggleGameLogoUpload
+            if (typeof toggleGameLogoUpload === 'function') toggleGameLogoUpload();
+            if (typeof toggleBasePackname === 'function') toggleBasePackname();
+        }
+
+        function openSubChannelConfig() {
+            var chId = document.getElementById('selectedChannelIds').value;
+            if (!chId) {
+                UI.showMessage('warning', '请先选择渠道');
+                return;
+            }
+            var ch = channelData.find(function(c) { return String(c.id) === String(chId); });
+            if (!ch) {
+                UI.showMessage('warning', '未找到对应渠道');
+                return;
+            }
+            UI.showMessage('info', '子渠道参数：AppId=' + (ch.appId || '-') + '，AppKey=' + (ch.appKey || '-'));
+        }
+
+        // iOS CFBundleURLTypes 动态组管理
+        var cfBundleGroupCount = 1;
+
+        function toggleCFBundleAddBtn() {
+            var select = document.getElementById('isConfigCFBundleURLTypes');
+            var btn = document.getElementById('cfBundleAddBtn');
+            if (select && btn) {
+                btn.style.display = select.value === 'true' ? '' : 'none';
+            }
+        }
+
+        function updateCFBundleDeleteButtons() {
+            var groups = document.querySelectorAll('#cfBundleGroups .cf-bundle-group');
+            var delBtns = document.querySelectorAll('#cfBundleGroups .cf-del-btn');
+            var show = groups.length > 1;
+            delBtns.forEach(function(btn) {
+                btn.style.display = show ? '' : 'none';
+            });
+        }
+
+        function getCFBundleGroupCount() {
+            return document.querySelectorAll('#cfBundleGroups .cf-bundle-group').length;
+        }
+
+        function renumberCFBundleGroups() {
+            var groups = document.querySelectorAll('#cfBundleGroups .cf-bundle-group');
+            groups.forEach(function(group, index) {
+                var n = index + 1;
+                group.setAttribute('data-group', n);
+                // 更新标题
+                var headerDiv = group.querySelector('div > div[style*="font-size:13px"]');
+                if (headerDiv) headerDiv.textContent = '配置组 ' + n;
+                // 更新删除按钮
+                var delBtn = group.querySelector('.cf-del-btn');
+                if (delBtn) delBtn.setAttribute('onclick', 'removeCFBundleGroup(' + n + ')');
+                // 更新 URL identifier 标签
+                var labels = group.querySelectorAll('.form-row-label');
+                if (labels.length >= 2) {
+                    labels[0].textContent = 'URL identifier' + n;
+                    labels[1].textContent = 'CFBundleURLTypes' + n + '内容数组';
+                }
+            });
+            cfBundleGroupCount = groups.length;
+            updateCFBundleDeleteButtons();
+        }
+
+        function addCFBundleGroup() {
+            var n = getCFBundleGroupCount() + 1;
+            cfBundleGroupCount = n;
+            var container = document.getElementById('cfBundleGroups');
+            var group = document.createElement('div');
+            group.className = 'cf-bundle-group';
+            group.setAttribute('data-group', n);
+            group.style.cssText = 'margin-bottom:16px;padding:14px;background:var(--gray-100);border-radius:8px;';
+            group.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+                '<div style="font-size:13px;font-weight:600;color:var(--gray-900);">配置组 ' + n + '</div>' +
+                '<button type="button" class="cf-del-btn" onclick="removeCFBundleGroup(' + n + ')" title="删除此组" style="width:24px;height:24px;border:none;background:transparent;color:var(--gray-600);cursor:pointer;border-radius:4px;font-size:16px;line-height:1;">&times;</button>' +
+                '</div>' +
+                '<div class="form-row"><div class="form-row-label">URL identifier' + n + '</div><div class="form-row-body"><input type="text" class="form-input" placeholder="如: weixin"></div></div>' +
+                '<div class="form-row"><div class="form-row-label">CFBundleURLTypes' + n + '内容数组</div><div class="form-row-body"><input type="text" class="form-input" placeholder=\'如: ["37WANSDk.com.yougui","fingleSdk.com.yougui"]\'></div></div>';
+            container.appendChild(group);
+            updateCFBundleDeleteButtons();
+        }
+        function removeCFBundleGroup(groupNum) {
+            var groups = document.querySelectorAll('#cfBundleGroups .cf-bundle-group');
+            if (groups.length <= 1) {
+                return;
+            }
+            var target = document.querySelector('#cfBundleGroups .cf-bundle-group[data-group="' + groupNum + '"]');
+            if (target) {
+                target.remove();
+                renumberCFBundleGroups();
+            }
+        }
+
+        function escHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ===== 所属平台选择（表格样式） =====
+        let pendingPlatformId = null;  // 弹窗中暂选的平台ID
+
+        function getAvailablePlatforms() {
+            const data = localStorage.getItem('repkg_platforms');
+            if (!data) return [];
+            return JSON.parse(data).filter(p => p.platformStatus !== false);
+        }
+
+        function openPlatformSelectModal() {
+            const currentId = document.getElementById('selectedPlatformId').value;
+            pendingPlatformId = currentId || null;
+            document.getElementById('ps_searchInput').value = '';
+            document.getElementById('platformSelectModal2').classList.add('show');
+            renderPlatformSelectTable();
+        }
+
+        function closePlatformSelectModal() {
+            document.getElementById('platformSelectModal2').classList.remove('show');
+        }
+
+        function renderPlatformSelectTable() {
+            const keyword = document.getElementById('ps_searchInput').value.toLowerCase();
+            let platforms = getAvailablePlatforms();
+            if (keyword) {
+                platforms = platforms.filter(p =>
+                    (p.platformName && p.platformName.toLowerCase().includes(keyword)) ||
+                    (p.companyName && p.companyName.toLowerCase().includes(keyword)) ||
+                    (p.legalPerson && p.legalPerson.toLowerCase().includes(keyword))
+                );
+            }
+
+            const tbody = document.getElementById('ps_tbody');
+            const empty = document.getElementById('ps_empty');
+
+            if (platforms.length === 0) {
+                document.getElementById('ps_table').style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            document.getElementById('ps_table').style.display = '';
+            empty.style.display = 'none';
+
+            tbody.innerHTML = platforms.map(p => {
+                const isSelected = pendingPlatformId === p.id;
+                return `
+                    <tr>
+                        <td class="col-id"><code style="background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:12px;">${escHtml(p.id)}</code></td>
+                        <td class="col-name"><strong>${escHtml(p.platformName)}</strong></td>
+                        <td class="col-company">${escHtml(p.companyName) || '-'}</td>
+                        <td class="col-legal">${escHtml(p.legalPerson) || '-'}</td>
+                        <td class="col-valid">${p.validUntil || '-'}</td>
+                        <td class="col-operator">${escHtml(p.modifier) || escHtml(p.creator) || '-'}</td>
+                        <td class="col-time">${escHtml(p.modifiedAt) || escHtml(p.updatedAt) || '-'}</td>
+                        <td class="col-action">
+                            <button class="ps-select-btn${isSelected ? ' selected' : ''}" onclick="togglePlatformPick('${p.id}','${escHtml(p.platformName)}','${escHtml(p.companyName) || ''}')">
+                                ${isSelected ? '已选中' : '选择'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function togglePlatformPick(id, name, companyName) {
+            if (pendingPlatformId === id) {
+                pendingPlatformId = null;
+            } else {
+                pendingPlatformId = id;
+            }
+            renderPlatformSelectTable();
+        }
+
+        function confirmPlatformSelect() {
+            var prevCompanyId = document.getElementById('companyId').value;
+            if (pendingPlatformId) {
+                const platforms = getAvailablePlatforms();
+                const found = platforms.find(p => p.id === pendingPlatformId);
+                if (found) {
+                    document.getElementById('selectedPlatformId').value = found.id;
+                    document.getElementById('companyId').value = found.id || '';
+                    const label = found.companyName
+                        ? `${found.platformName}（${found.companyName}）`
+                        : found.platformName || '';
+                    document.getElementById('companyName').value = found.companyName || found.platformName || '';
+                    const display = document.getElementById('selectedPlatformDisplay');
+                    display.textContent = label;
+                    display.style.color = 'var(--gray-900)';
+                    display.style.fontWeight = '500';
+                }
+            } else {
+                document.getElementById('selectedPlatformId').value = '';
+                document.getElementById('companyId').value = '';
+                document.getElementById('companyName').value = '';
+                const display = document.getElementById('selectedPlatformDisplay');
+                display.textContent = '点击选择所属企业';
+                display.style.color = 'var(--gray-600)';
+                display.style.fontWeight = 'normal';
+            }
+            // 企业变更时清空已选母包
+            var newCompanyId = document.getElementById('companyId').value;
+            if (prevCompanyId !== newCompanyId) {
+                clearGameSelection();
+            }
+            closePlatformSelectModal();
+        }
+
+        // 清空母包选择
+        function clearGameSelection() {
+            document.getElementById('selectedGameId').value = '';
+            var display = document.getElementById('gameDisplay');
+            display.textContent = '请先选择所属企业';
+            display.style.color = 'var(--gray-600)';
+            display.style.fontWeight = 'normal';
+            document.getElementById('gameName').value = '';
+            document.getElementById('systemType').value = 'Android';
+            var stDisplay = document.getElementById('systemTypeDisplay');
+            stDisplay.textContent = '选择母包后自动显示';
+            stDisplay.style.color = 'var(--gray-600)';
+            stDisplay.style.fontWeight = 'normal';
+            document.getElementById('packageName').value = '';
+            document.getElementById('isModifyBasePackname').value = 'false';
+            toggleBasePackname();
+            document.getElementById('gameParams').value = '';
+        }
+
+        // 渠道数据
+        const channelData = [
+            { id: 1, platform: '抖音', account: 'douyin_001', packResId: 'PKR001', appId: 'tt001', appKey: 'ttkey001' },
+            { id: 2, platform: '抖音', account: 'douyin_002', packResId: 'PKR002', appId: 'tt002', appKey: 'ttkey002' },
+            { id: 3, platform: '快手', account: 'kuaishou_001', packResId: 'PKR003', appId: 'ks001', appKey: 'kskey001' },
+            { id: 4, platform: '快手', account: 'kuaishou_002', packResId: 'PKR004', appId: 'ks002', appKey: 'kskey002' },
+            { id: 5, platform: '微信', account: 'wechat_001', packResId: 'PKR005', appId: 'wx001', appKey: 'wxkey001' },
+            { id: 6, platform: '微信', account: 'wechat_002', packResId: 'PKR006', appId: 'wx002', appKey: 'wxkey002' },
+            { id: 7, platform: '应用宝', account: 'yb_001', packResId: 'PKR007', appId: 'yb001', appKey: 'ybkey001' },
+            { id: 8, platform: '华为', account: 'huawei_001', packResId: 'PKR008', appId: 'hw001', appKey: 'hwkey001' },
+            { id: 9, platform: '小米', account: 'xiaomi_001', packResId: 'PKR009', appId: 'xm001', appKey: 'xmkey001' },
+            { id: 10, platform: 'OPPO', account: 'oppo_001', packResId: 'PKR010', appId: 'op001', appKey: 'opkey001' },
+            { id: 11, platform: 'VIVO', account: 'vivo_001', packResId: 'PKR011', appId: 'vv001', appKey: 'vvkey001' },
+            { id: 12, platform: '百度', account: 'baidu_001', packResId: 'PKR012', appId: 'bd001', appKey: 'bdkey001' },
+            { id: 13, platform: '头条', account: 'toutiao_001', packResId: 'PKR013', appId: 'tt2_001', appKey: 'tt2key001' },
+            { id: 14, platform: 'UC', account: 'uc_001', packResId: 'PKR014', appId: 'uc001', appKey: 'uckey001' },
+            { id: 15, platform: 'B站', account: 'bilibili_001', packResId: 'PKR015', appId: 'bili001', appKey: 'bilikey001' }
+        ];
+
+        // 分包资源列表数据（按渠道关联）
+        const packResData = {
+            'douyin_001': [{id:'PR001',name:'抖音标准资源包',version:'v2.1.0',status:'可用'},{id:'PR002',name:'抖音高清资源包',version:'v2.3.1',status:'可用'},{id:'PR003',name:'抖音轻量资源包',version:'v1.8.0',status:'已过期'}],
+            'douyin_002': [{id:'PR004',name:'抖音国际版资源包',version:'v2.0.0',status:'可用'}],
+            'kuaishou_001': [{id:'PR005',name:'快手标准资源包',version:'v3.0.1',status:'可用'},{id:'PR006',name:'快手极速版资源包',version:'v2.5.0',status:'可用'}],
+            'kuaishou_002': [{id:'PR007',name:'快手海外资源包',version:'v1.9.0',status:'维护中'}],
+            'huawei_001': [{id:'PR008',name:'华为基础资源包',version:'v1.2.0',status:'可用'},{id:'PR009',name:'华为增强资源包',version:'v1.5.3',status:'可用'}],
+            'xiaomi_001': [{id:'PR010',name:'小米标准资源包',version:'v2.0.5',status:'可用'}],
+            'oppo_001': [{id:'PR011',name:'OPPO渠道资源包',version:'v1.8.2',status:'可用'}],
+            'vivo_001': [{id:'PR012',name:'VIVO渠道资源包',version:'v1.7.0',status:'可用'}],
+            'baidu_001': [{id:'PR013',name:'百度渠道资源包',version:'v2.2.0',status:'可用'}],
+            'toutiao_001': [{id:'PR014',name:'头条标准资源包',version:'v2.0.1',status:'可用'}],
+            'uc_001': [{id:'PR015',name:'UC渠道资源包',version:'v1.6.0',status:'可用'}],
+            'bilibili_001': [{id:'PR016',name:'B站渠道资源包',version:'v1.4.0',status:'可用'}],
+            'yb_001': [{id:'PR017',name:'应用宝资源包',version:'v2.0.0',status:'可用'}],
+            'wechat_001': [{id:'PR018',name:'微信小游戏资源包',version:'v1.5.0',status:'可用'}],
+            'wechat_002': [{id:'PR019',name:'微信小程序资源包',version:'v2.1.0',status:'可用'}],
+        };
+
+        // ===== 分包资源弹窗 =====
+        function openPackResModal() {
+            var chIds = document.getElementById('selectedChannelIds').value.split(',');
+            if (!chIds.length || !chIds[0]) { UI.showMessage('warning', '请先选择渠道'); return; }
+            var lastChId = chIds[chIds.length - 1];
+            var ch = channelData.find(c => c.id == lastChId);
+            if (!ch) { UI.showMessage('warning', '未找到对应渠道'); return; }
+            document.getElementById('packResChannelLabel').textContent = ch.platform + ' (' + ch.account + ')';
+            renderPackResTable(ch.account);
+            document.getElementById('packResModal').classList.add('show');
+        }
+
+        function closePackResModal() { document.getElementById('packResModal').classList.remove('show'); }
+
+        function renderPackResTable(account) {
+            var tbody = document.getElementById('packResTableBody');
+            var empty = document.getElementById('packResEmpty');
+            var resources = packResData[account] || [];
+            if (!resources.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+            empty.style.display = 'none';
+            var tagMap = {'可用':'tag-success','维护中':'tag-warning','已过期':'tag-danger'};
+            tbody.innerHTML = resources.map(function(r) {
+                var tag = tagMap[r.status] || 'tag-default';
+                return '<tr><td>' + r.id + '</td><td>' + r.name + '</td><td>' + r.version + '</td><td><span class="tag ' + tag + '">' + r.status + '</span></td><td><button class="btn btn-sm btn-primary" onclick="selectPackRes(\'' + r.id + '\',\'' + r.name + '\')">选择</button></td></tr>';
+            }).join('');
+        }
+
+        function selectPackRes(resId, resName) {
+            var display = document.getElementById('channelPackResId');
+            display.textContent = resId + ' - ' + resName;
+            display.style.color = 'var(--gray-900)'; display.style.fontWeight = '500';
+            closePackResModal();
+            UI.showMessage('success', '已选择分包资源：' + resId);
+        }
+
+        let selectedChannels = [];
+        let currentPage = 1;
+        const pageSize = 5;
+
+        // ===== 平台多选筛选 =====
+        let selectedPlatforms = [];           // 已选平台（已确认）
+        let tempSelectedPlatforms = [];       // 下拉框中临时勾选（未点确定）
+
+        // ===== 渠道账号多选筛选 =====
+        let selectedAccounts = [];            // 已选账号（已确认）
+        let tempSelectedAccounts = [];        // 下拉框中临时勾选（未点确定）
+
+        // 获取所有不重复的平台列表
+        function getUniquePlatforms() {
+            return [...new Set(channelData.map(c => c.platform))].sort();
+        }
+
+        // 获取所有不重复的渠道账号列表
+        function getUniqueAccounts() {
+            return [...new Set(channelData.map(c => c.account))].sort();
+        }
+
+        // ---- 平台下拉 ----
+        function renderPlatformDropdown() {
+            const platforms = getUniquePlatforms();
+            const listEl = document.getElementById('platformDropdownList');
+            listEl.innerHTML = platforms.map(p => {
+                const checked = tempSelectedPlatforms.includes(p);
+                return `<div class="platform-dropdown-item" onclick="toggleTempPlatform('${p.replace(/'/g, "\\'")}')">
+                    <input type="checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation()">
+                    <label>${p}</label>
+                </div>`;
+            }).join('');
+        }
+
+        function toggleTempPlatform(platform) {
+            const idx = tempSelectedPlatforms.indexOf(platform);
+            if (idx > -1) { tempSelectedPlatforms.splice(idx, 1); }
+            else { tempSelectedPlatforms.push(platform); }
+            renderPlatformDropdown();
+        }
+
+        function applyPlatformFilter() {
+            selectedPlatforms = [...tempSelectedPlatforms];
+            closePlatformDropdown();
+            renderAllTags();
+        }
+
+        function clearPlatformFilter(event) {
+            if (event) event.stopPropagation();
+            tempSelectedPlatforms = [];
+            selectedPlatforms = [];
+            renderPlatformDropdown();
+            renderAllTags();
+        }
+
+        function togglePlatformDropdown() {
+            const dropdown = document.getElementById('platformDropdown');
+            if (dropdown.classList.contains('show')) {
+                closePlatformDropdown();
+            } else {
+                closeAccountDropdown();
+                tempSelectedPlatforms = [...selectedPlatforms];
+                renderPlatformDropdown();
+                dropdown.classList.add('show');
+            }
+        }
+
+        function closePlatformDropdown() {
+            document.getElementById('platformDropdown').classList.remove('show');
+        }
+
+        // ---- 账号下拉 ----
+        function renderAccountDropdown() {
+            const accounts = getUniqueAccounts();
+            const listEl = document.getElementById('accountDropdownList');
+            listEl.innerHTML = accounts.map(a => {
+                const checked = tempSelectedAccounts.includes(a);
+                return `<div class="platform-dropdown-item" onclick="toggleTempAccount('${a.replace(/'/g, "\\'")}')">
+                    <input type="checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation()">
+                    <label>${a}</label>
+                </div>`;
+            }).join('');
+        }
+
+        function toggleTempAccount(account) {
+            const idx = tempSelectedAccounts.indexOf(account);
+            if (idx > -1) { tempSelectedAccounts.splice(idx, 1); }
+            else { tempSelectedAccounts.push(account); }
+            renderAccountDropdown();
+        }
+
+        function applyAccountFilter() {
+            selectedAccounts = [...tempSelectedAccounts];
+            closeAccountDropdown();
+            renderAllTags();
+        }
+
+        function clearAccountFilter(event) {
+            if (event) event.stopPropagation();
+            tempSelectedAccounts = [];
+            selectedAccounts = [];
+            renderAccountDropdown();
+            renderAllTags();
+        }
+
+        function toggleAccountDropdown() {
+            const dropdown = document.getElementById('accountDropdown');
+            if (dropdown.classList.contains('show')) {
+                closeAccountDropdown();
+            } else {
+                closePlatformDropdown();
+                tempSelectedAccounts = [...selectedAccounts];
+                renderAccountDropdown();
+                dropdown.classList.add('show');
+            }
+        }
+
+        function closeAccountDropdown() {
+            document.getElementById('accountDropdown').classList.remove('show');
+        }
+
+        // ---- 统一标签渲染（平台 + 账号） ----
+        function renderAllTags() {
+            const container = document.getElementById('platformSelectedTags');
+            const platformBtn = document.getElementById('platformFilterBtn');
+            const platformText = document.getElementById('platformFilterText');
+            const accountBtn = document.getElementById('accountFilterBtn');
+            const accountText = document.getElementById('accountFilterText');
+
+            let tagsHtml = '';
+
+            // 平台标签
+            selectedPlatforms.forEach(p => {
+                tagsHtml += `<span class="platform-tag">平台:${p}
+                    <span class="platform-tag-remove" onclick="removePlatformFilter('${p.replace(/'/g, "\\'")}')">&times;</span>
+                </span>`;
+            });
+
+            // 账号标签
+            selectedAccounts.forEach(a => {
+                tagsHtml += `<span class="platform-tag account-tag">账号:${a}
+                    <span class="platform-tag-remove" onclick="removeAccountFilter('${a.replace(/'/g, "\\'")}')">&times;</span>
+                </span>`;
+            });
+
+            container.innerHTML = tagsHtml;
+
+            // 更新按钮文字
+            platformText.textContent = selectedPlatforms.length > 0
+                ? `所属平台 (${selectedPlatforms.length})` : '所属平台';
+            platformBtn.classList.toggle('active', selectedPlatforms.length > 0);
+
+            accountText.textContent = selectedAccounts.length > 0
+                ? `渠道账号 (${selectedAccounts.length})` : '渠道账号';
+            accountBtn.classList.toggle('active', selectedAccounts.length > 0);
+        }
+
+        function removePlatformFilter(platform) {
+            selectedPlatforms = selectedPlatforms.filter(p => p !== platform);
+            tempSelectedPlatforms = tempSelectedPlatforms.filter(p => p !== platform);
+            renderAllTags();
+            renderPlatformDropdown();
+        }
+
+        function removeAccountFilter(account) {
+            selectedAccounts = selectedAccounts.filter(a => a !== account);
+            tempSelectedAccounts = tempSelectedAccounts.filter(a => a !== account);
+            renderAllTags();
+            renderAccountDropdown();
+        }
+
+        // ---- 点击外部关闭所有下拉 ----
+        document.addEventListener('click', function(e) {
+            const pw = document.getElementById('platformFilterWrapper');
+            const aw = document.getElementById('accountFilterWrapper');
+            if (pw && !pw.contains(e.target)) closePlatformDropdown();
+            if (aw && !aw.contains(e.target)) closeAccountDropdown();
+        });
+
+        // ---- 综合筛选 ----
+        function getFilteredChannels() {
+            let filtered = [...channelData];
+            var kw = (document.getElementById('channelSearchInput').value || '').toLowerCase();
+            if (kw) {
+                filtered = filtered.filter(c =>
+                    c.platform.toLowerCase().indexOf(kw) > -1 ||
+                    c.account.toLowerCase().indexOf(kw) > -1
+                );
+            }
+            if (selectedPlatforms.length > 0) {
+                filtered = filtered.filter(c => selectedPlatforms.includes(c.platform));
+            }
+            if (selectedAccounts.length > 0) {
+                filtered = filtered.filter(c => selectedAccounts.includes(c.account));
+            }
+            return filtered;
+        }
+
+        // ---- 打开弹窗（修复回显） ----
+        function openChannelSelectModal() {
+            var companyId = document.getElementById('companyId').value.trim();
+            if (!companyId) {
+                UI.showMessage('warning', '请先选择所属企业');
+                return;
+            }
+            openChannelModal();
+        }
+
+        function openChannelModal() {
+            currentPage = 1;
+
+            // 已选渠道已在selectedChannels中维护，无需从输入框回显
+
+            // 重置筛选条件，让用户从全部数据开始
+            selectedPlatforms = [];
+            selectedAccounts = [];
+            tempSelectedPlatforms = [];
+            tempSelectedAccounts = [];
+
+            renderAllTags();
+            renderChannelList();
+            document.getElementById('channelModal').classList.add('show');
+        }
+
+        // 关闭渠道选择弹窗
+        function closeChannelModal() {
+            document.getElementById('channelModal').classList.remove('show');
+        }
+
+        // ---- 渠道列表渲染 ----
+        function renderChannelList() {
+            const listContainer = document.getElementById('channelList');
+            const filteredChannels = getFilteredChannels();
+
+            const totalPages = Math.ceil(filteredChannels.length / pageSize);
+            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+            
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const pageChannels = filteredChannels.slice(startIndex, endIndex);
+
+            if (filteredChannels.length === 0) {
+                listContainer.innerHTML = '<div class="channel-empty">没有找到匹配的渠道</div>';
+                document.getElementById('channelPagination').innerHTML = '';
+                updateChannelCount();
+                return;
+            }
+
+            listContainer.innerHTML = pageChannels.map(channel => {
+                const isSelected = selectedChannels.some(c => c.id === channel.id);
+                return `
+                    <div class="channel-item ${isSelected ? 'selected' : ''}" onclick="toggleChannel(${channel.id}, event)">
+                        <div><input type="checkbox" class="channel-checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation()"></div>
+                        <div class="channel-platform">${channel.platform}</div>
+                        <div class="channel-account">${channel.account}</div>
+                    </div>
+                `;
+            }).join('');
+
+            renderPagination(filteredChannels.length, totalPages);
+            updateSelectAllState();
+            updateChannelCount();
+        }
+
+        // ---- 分页 ----
+        function renderPagination(total, totalPages) {
+            const paginationContainer = document.getElementById('channelPagination');
+            if (totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            html += `<button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>`;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    html += `<button onclick="goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    html += `<span>...</span>`;
+                }
+            }
+            
+            html += `<button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>`;
+            html += `<span>共 ${total} 条</span>`;
+            
+            paginationContainer.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            const filteredChannels = getFilteredChannels();
+            const totalPages = Math.ceil(filteredChannels.length / pageSize);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                renderChannelList();
+            }
+        }
+
+        // ---- 渠道勾选 ----
+        function toggleChannel(channelId, event) {
+            if (event) event.stopPropagation();
+            const channel = channelData.find(c => c.id === channelId);
+            if (!channel) return;
+
+            const index = selectedChannels.findIndex(c => c.id === channelId);
+            if (index > -1) {
+                selectedChannels.splice(index, 1);
+            } else {
+                selectedChannels.push(channel);
+            }
+            renderChannelList();
+        }
+
+        function toggleSelectAllChannels() {
+            const selectAllCheckbox = document.getElementById('channelSelectAll');
+            const filteredChannels = getFilteredChannels();
+
+            if (selectAllCheckbox.checked) {
+                filteredChannels.forEach(channel => {
+                    if (!selectedChannels.some(c => c.id === channel.id)) {
+                        selectedChannels.push(channel);
+                    }
+                });
+            } else {
+                filteredChannels.forEach(channel => {
+                    const index = selectedChannels.findIndex(c => c.id === channel.id);
+                    if (index > -1) selectedChannels.splice(index, 1);
+                });
+            }
+            renderChannelList();
+        }
+
+        function updateSelectAllState() {
+            const filteredChannels = getFilteredChannels();
+            const allSelected = filteredChannels.every(channel =>
+                selectedChannels.some(c => c.id === channel.id)
+            );
+            const someSelected = filteredChannels.some(channel =>
+                selectedChannels.some(c => c.id === channel.id)
+            );
+            const selectAllCheckbox = document.getElementById('channelSelectAll');
+            selectAllCheckbox.checked = allSelected;
+            selectAllCheckbox.indeterminate = someSelected && !allSelected;
+        }
+
+        function filterChannels() {
+            currentPage = 1;
+            renderChannelList();
+        }
+
+        function updateChannelCount() {
+            document.getElementById('channelCount').textContent = selectedChannels.length;
+        }
+
+        // ---- 确认选择 ----
+        function confirmChannelSelection() {
+            if (selectedChannels.length === 0) {
+                UI.showMessage('warning', '请至少选择一个渠道');
+                return;
+            }
+            var ch = selectedChannels[0];
+            document.getElementById('selectedChannelIds').value = ch.id;
+            document.getElementById('channelName').value = ch.platform + ' - ' + ch.account;
+            document.getElementById('channelPackResId').textContent = ch.packResId || '点击选择分包资源';
+            document.getElementById('channelDisplay').textContent = ch.platform + '（已选' + selectedChannels.length + '个渠道）';
+            document.getElementById('channelDisplay').style.color = 'var(--gray-900)';
+            document.getElementById('channelDisplay').style.fontWeight = '500';
+            UI.showMessage('success', '已选择渠道：' + ch.platform);
+            closeChannelModal();
+        }
+        
+        // ---- 埋点选项切换 ----
+        function handleBuriedPointChange() {
+            const selectedType = document.querySelector('input[name="buriedPointType"]:checked').value;
+            const fieldsContainer = document.getElementById('buriedPointFields');
+            const douyinFields = document.querySelectorAll('.douyin-field');
+            const kuaishouFields = document.querySelectorAll('.kuaishou-field');
+            
+            // 隐藏所有字段
+            fieldsContainer.style.display = 'none';
+            douyinFields.forEach(field => field.style.display = 'none');
+            kuaishouFields.forEach(field => field.style.display = 'none');
+            
+            // 根据选择显示对应字段
+            if (selectedType === 'douyin') {
+                fieldsContainer.style.display = 'grid';
+                douyinFields.forEach(field => field.style.display = 'block');
+            } else if (selectedType === 'kuaishou') {
+                fieldsContainer.style.display = 'grid';
+                kuaishouFields.forEach(field => field.style.display = 'block');
+            }
+            
+            // 清空输入框值
+            if (selectedType === 'none') {
+                document.getElementById('douyinAppId').value = '';
+                document.getElementById('kuaishouAppId').value = '';
+                document.getElementById('kuaishouAppName').value = '';
+            }
+        }
+
+        // ---- 系统切换 ----
+        function switchSystem(systemType) {
+            // 更新按钮状态
+            document.querySelectorAll('.system-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.querySelector('.system-btn[data-system="' + systemType + '"]');
+            if (activeBtn) activeBtn.classList.add('active');
+
+            // 更新系统类型
+            var sysMap = { android: 'Android', ios: 'iOS', pc: 'Windows' };
+            document.getElementById('systemType').value = sysMap[systemType] || 'Android';
+
+            // 切换系统专属字段显隐
+            document.querySelectorAll('[data-systems]').forEach(function(el) {
+                var systems = el.getAttribute('data-systems').split(',');
+                el.style.display = systems.indexOf(systemType) > -1 ? '' : 'none';
+            });
+
+            // 重新应用条件展开
+            reapplyConditionalFields();
+            // iOS专属配置恢复（仅iOS端）
+            if (systemType === 'ios') {
+                togglePackField('isConfigCFBundleURLTypes', 'cfBundleSection');
+                toggleCFBundleAddBtn();
+                togglePackField('isConfigLSAppQueriesSchemes', 'lsSchemeSection');
+            }
+
+            // 切换原型说明面板
+            document.querySelectorAll('.proto-panel').forEach(function(p) { p.classList.remove('show'); });
+            var panelMap = { android: 'protoPanelAndroid', ios: 'protoPanelIOS', pc: 'protoPanelPC' };
+            var panel = document.getElementById(panelMap[systemType]);
+            if (panel) panel.classList.add('show');
+
+            // 更新原型说明标题
+            var titleMap = { android: 'Android', ios: 'iOS', pc: 'PC端' };
+            var titleEl = document.getElementById('protoDrawerTitle');
+            if (titleEl) titleEl.textContent = '原型说明 - 重新分包（' + titleMap[systemType] + '）';
+        }
+        // ===== 原型说明浮窗 =====
+        var fabIsMouseDown = false, fabWasDragged = false, fabStartX, fabStartY;
+        document.addEventListener('DOMContentLoaded', function() {
+            var fab = document.getElementById('protoFab');
+            fab.addEventListener('mousedown', function(e) {
+                if (e.button !== 0) return;
+                fabIsMouseDown = true; fabWasDragged = false;
+                fabStartX = e.clientX; fabStartY = e.clientY;
+                var rect = fab.getBoundingClientRect();
+                fab.style.right = 'auto'; fab.style.top = rect.top + 'px'; fab.style.left = rect.left + 'px';
+                fab.style.transition = 'none';
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', function(e) {
+                if (!fabIsMouseDown) return;
+                var dx = e.clientX - fabStartX, dy = e.clientY - fabStartY;
+                if (Math.abs(dx) > 2 || Math.abs(dy) > 2) fabWasDragged = true;
+                fab.style.right = 'auto';
+                fab.style.left = Math.max(0, Math.min(window.innerWidth - fab.offsetWidth, fab.offsetLeft + dx)) + 'px';
+                fab.style.top = Math.max(0, Math.min(window.innerHeight - fab.offsetHeight, fab.offsetTop + dy)) + 'px';
+                fabStartX = e.clientX; fabStartY = e.clientY;
+            });
+            document.addEventListener('mouseup', function() {
+                if (!fabIsMouseDown) return;
+                fabIsMouseDown = false;
+                fab.style.transition = '';
+            });
+            fab.addEventListener('click', function(e) {
+                if (!fabWasDragged) toggleProtoDrawer();
+            });
+        });
+        function toggleProtoDrawer() {
+            document.getElementById('protoDrawer').classList.toggle('show');
+            document.getElementById('protoDrawerOverlay').classList.toggle('show');
+        }
+        function closeProtoDrawer() {
+            document.getElementById('protoDrawer').classList.remove('show');
+            document.getElementById('protoDrawerOverlay').classList.remove('show');
+        }
+
+        // ===== 初始化演示数据 =====
+        function initDemoGames() {
+            if (!localStorage.getItem('repkg_games')) {
+                localStorage.setItem('repkg_games', JSON.stringify([
+                    {id:1,name:'传奇世界H5',systemType:'Android',packageName:'com.legend.world',gcreenOrientation:'横屏',gameAggregationType:'MMO'},
+                    {id:2,name:'消消乐',systemType:'Android',packageName:'com.xiaoxiaole.game',gcreenOrientation:'竖屏',gameAggregationType:'CASUAL'},
+                    {id:3,name:'三国志',systemType:'iOS',packageName:'com.sanguo.ios',gcreenOrientation:'横屏',gameAggregationType:'SLG'},
+                    {id:4,name:'王者之路',systemType:'PC端',packageName:'com.king.pc',gcreenOrientation:'横屏',gameAggregationType:'RPG'},
+                    {id:5,name:'琅琊三国',systemType:'iOS',packageName:'com.langya.sg',gcreenOrientation:'竖屏',gameAggregationType:'CARD'}
+                ]));
+            }
+        }
+        initDemoGames();
+
+        // ===== 母包选择弹窗 =====
+        function openGameSelectModal() {
+            var companyId = document.getElementById('companyId').value.trim();
+            if (!companyId) {
+                UI.showMessage('warning', '请先选择所属企业');
+                return;
+            }
+            document.getElementById('gameSearchName').value = '';
+            document.getElementById('gameSearchPackage').value = '';
+            document.getElementById('gameSearchType').value = '';
+            renderGameTable();
+            document.getElementById('gameSelectModal').classList.add('show');
+        }
+        function renderGameTable() {
+            var games = JSON.parse(localStorage.getItem('repkg_games') || '[]');
+            var kwName = (document.getElementById('gameSearchName').value || '').toLowerCase();
+            var kwPkg = (document.getElementById('gameSearchPackage').value || '').toLowerCase();
+            var kwType = document.getElementById('gameSearchType').value;
+            games = games.filter(function(g) {
+                if (kwName && (g.name || '').toLowerCase().indexOf(kwName) === -1) return false;
+                if (kwPkg && (g.packageName || '').toLowerCase().indexOf(kwPkg) === -1) return false;
+                if (kwType && g.systemType !== kwType) return false;
+                return true;
+            });
+            var tbody = document.getElementById('gameSelectTableBody');
+            var empty = document.getElementById('gameSelectEmpty');
+            if (games.length === 0) {
+                tbody.innerHTML = '';
+                empty.style.display = 'block';
+            } else {
+                empty.style.display = 'none';
+                tbody.innerHTML = games.map(function(g) {
+                    var icon = g.systemType === 'iOS' ? 'fa-apple' : g.systemType === 'Windows' ? 'fa-desktop' : 'fa-android';
+                    return '<tr><td>#' + g.id + '</td><td><strong>' + g.name + '</strong></td><td><i class="fa ' + icon + '" style="margin-right:6px;"></i>' + (g.systemType || 'Android') + '</td><td style="font-size:12px;color:var(--gray-600);">' + (g.packageName || '-') + '</td><td><button class="btn btn-sm btn-primary" onclick="selectGame(\'' + g.id + '\',\'' + (g.name || '').replace(/'/g,"\\'") + '\')">选择</button></td></tr>';
+                }).join('');
+            }
+        }
+        function closeGameSelectModal() {
+            document.getElementById('gameSelectModal').classList.remove('show');
+        }
+        function selectGame(gameId, gameName) {
+            document.getElementById('selectedGameId').value = gameId;
+            var display = document.getElementById('gameDisplay');
+            display.textContent = gameName;
+            display.style.color = 'var(--gray-900)';
+            display.style.fontWeight = '500';
+            closeGameSelectModal();
+            var games = JSON.parse(localStorage.getItem('repkg_games') || '[]');
+            var game = games.find(function(g) { return String(g.id) === String(gameId); });
+            if (!game) return;
+            document.getElementById('gameName').value = game.name || '';
+            document.getElementById('systemType').value = game.systemType || 'Android';
+            // 显示系统类型（只读）
+            var stDisplay = document.getElementById('systemTypeDisplay');
+            var typeLabelMap = { Android: 'Android', iOS: 'iOS', Windows: 'PC端' };
+            stDisplay.textContent = typeLabelMap[game.systemType] || game.systemType || 'Android';
+            stDisplay.style.color = 'var(--gray-900)';
+            stDisplay.style.background = 'var(--gray-100)';
+            stDisplay.style.fontWeight = '500';
+            document.getElementById('packageName').value = game.packageName || '';
+            // 选择母包后自动启用包名编辑
+            document.getElementById('isModifyBasePackname').value = 'true';
+            toggleBasePackname();
+            document.getElementById('gameParams').value = game.parametersJsonFormat || '';
+            document.getElementById('gcreenOrientation').value = game.gcreenOrientation || '横屏';
+            document.getElementById('gameAggregationType').value = game.gameAggregationType || '';
+        }
+
+        // ===== 打包字段条件展开 =====
+        function togglePackField(flagId, targetId) {
+            var flag = document.getElementById(flagId).value === 'true';
+            var target = document.getElementById(targetId);
+            if (target) target.style.display = flag ? '' : 'none';
+        }
+
+        // 页面加载时预填数据
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                selectGame('1', '传奇世界H5');
+                document.getElementById('selectedPlatformDisplay').textContent = '抖音平台（北京字节跳动科技有限公司）';
+                document.getElementById('selectedPlatformDisplay').style.color = 'var(--gray-900)';
+                document.getElementById('selectedPlatformDisplay').style.fontWeight = '500';
+                document.getElementById('unionId').value = 'LX2024001';
+                document.getElementById('channelDisplay').textContent = '抖音渠道（douyin_001）';
+                document.getElementById('channelDisplay').style.color = 'var(--gray-900)';
+                document.getElementById('isModifyGamePackname').value = 'true';
+                document.getElementById('gameNewPackname').style.display = '';
+                document.getElementById('gameNewPackname').querySelector('input').value = 'com.newgame.pack001';
+                document.getElementById('isModifyGameVersion').value = 'true';
+                document.getElementById('gameVersionGroup').style.display = '';
+                document.getElementById('gameVersionGroup').querySelectorAll('input')[0].value = '2.0.1';
+                document.getElementById('gameVersionGroup').querySelectorAll('input')[1].value = '201';
+            }, 300);
+            updateCFBundleDeleteButtons();
+        });
+    </script>
+    <button class="proto-fab" id="protoFab" title="原型说明（可拖动）"><span>原</span><span>型</span><span>说</span><span>明</span></button>
+    <div class="proto-drawer-overlay" id="protoDrawerOverlay" onclick="closeProtoDrawer()"></div>
+    <div class="proto-drawer" id="protoDrawer">
+        <div class="proto-drawer-header">
+            <div class="proto-drawer-title"><i class="fa fa-info-circle"></i> <span id="protoDrawerTitle">原型说明 - 重新分包（Android）</span></div>
+            <button class="proto-drawer-close" onclick="closeProtoDrawer()"><i class="fa fa-times"></i></button>
+        </div>
+        <div class="proto-drawer-body">
+            <div class="proto-panel show" id="protoPanelAndroid">
+                <div class="proto-section">
+                    <div class="proto-section-title">页面用途</div>
+                    <p class="proto-text">对已有分包记录<strong>重新打包</strong>。从分包列表点击"重新分包"进入，自动读取原配置参数（所属平台、母包、渠道、打包参数等），修改后保存<strong>生成新记录</strong>，不覆盖原记录。</p>
+                </div>
+                <div class="proto-section">
+                    <div class="proto-section-title">操作流程</div>
+                    <div class="proto-flow"><span class="proto-step"><span class="proto-step-num">1</span>自动读取原配置</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">2</span>调整所属企业/母包</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">3</span>修改打包参数</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">4</span>更换渠道</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">5</span>保存</span></div>
+                </div>
+                <div class="proto-section">
+                    <div class="proto-section-title">与新建分包的区别</div>
+                    <table class="proto-table">
+                        <tr><th>对比项</th><th>新建分包</th><th>重新分包</th></tr>
+                        <tr><td>进入方式</td><td>从母包列表页点击"新增分包"</td><td>从分包列表页点击"重新分包"</td></tr>
+                        <tr><td>数据来源</td><td>手动选择母包+渠道</td><td>自动回填原分包的所有配置</td></tr>
+                        <tr><td>字段可修改</td><td>所有字段均可修改</td><td>所有字段均可修改</td></tr>
+                        <tr><td>保存行为</td><td>创建新分包记录</td><td>创建新分包记录，原记录保留</td></tr>
+                        <tr><td>分包号</td><td>自动生成新packId</td><td>自动生成新packId</td></tr>
+                    </table>
+                </div>
+                <div class="proto-section">
+                    <div class="proto-section-title">字段分区</div>
+                    <table class="proto-table">
+                        <tr><th>区块</th><th>关键字段</th></tr>
+                        <tr><td>基础信息</td><td>所属企业（只读，继承原分包）、选择母包、系统类型、游戏名称、游戏包名、游戏Icon、游戏操作模式</td></tr>
+                        <tr><td>游戏参数</td><td><strong>不同包体参数不同，动态解析渲染</strong>。常见字段：access_key、demain_url、game_channel_id、gameappid、gameid、gamename、gameurl、屏幕方向、聚合类型等</td></tr>
+                        <tr><td>打包参数</td><td>包名修改范围（7项 + activity-alias）、安装名、启动名、Icon修改、Logo修改、闪屏Logo、版本号、权限、OAID证书</td></tr>
+                        <tr><td>iOS专属</td><td>CFBundleURLTypes（支持多组增删）、LSApplicationQueriesSchemes</td></tr>
+                        <tr><td>渠道与存储</td><td>是否要先授权、QQ/微信参数、渠道出包资源Id、子渠道参数、渠道名称、渠道出包版本号</td></tr>
+                        <tr><td>Smali/Res</td><td>Smali处理模式修改、Res处理模式修改</td></tr>
+                        <tr><td>存储与发布</td><td>热云版本/地址、FTP地址、隐藏闪屏Logo、Debug模式、上传FTP/OSS配置</td></tr>
+                    </table>
+                </div>
+                <div class="proto-section">
+                    <div class="proto-section-title">业务规则</div>
+                    <div class="proto-field"><span class="proto-field-name">自动回填</span><span class="proto-field-desc">携带分包ID进入，自动读取packId、packFilePath、所属企业等完整配置</span></div>
+                    <div class="proto-field"><span class="proto-field-name">所属企业只读</span><span class="proto-field-desc">重新分包时所属企业不可修改，继承原分包的企业绑定</span></div>
+                    <div class="proto-field"><span class="proto-field-name">母包联动</span><span class="proto-field-desc">更换母包后，游戏参数自动刷新填充</span></div>
+                    <div class="proto-field"><span class="proto-field-name">渠道联动</span><span class="proto-field-desc">更换渠道后，渠道标识和资源ID自动更新</span></div>
+                    <div class="proto-field"><span class="proto-field-name">条件展开</span><span class="proto-field-desc">包名/安装名/Icon/Logo/版本等字段根据"是/否"动态展开</span></div>
+                    <div class="proto-field"><span class="proto-field-name">保存行为</span><span class="proto-field-desc">创建新记录，不修改原分包。原记录在分包列表中保持可见</span></div>
+                    <div class="proto-field"><span class="proto-field-name">企业关联字段</span><span class="proto-field-desc"><strong>是否隐藏闪屏页Logo</strong>、<strong>是否修改推广标识</strong>由管理端后台控制，仅在所属企业已开启对应功能时才显示，未开启则不展示</span></div>
+                    <div class="proto-field"><span class="proto-field-name">权限控制</span><span class="proto-field-desc">需登录 + game类型add权限</span></div>
+                </div>
+            </div>
+            <div class="proto-panel" id="protoPanelIOS">
+                <div class="proto-section">
+                    <div class="proto-section-title">页面用途</div>
+                    <p class="proto-text">对已有iOS分包记录<strong>重新打包</strong>。自动回填原配置（含iOS专属的CFBundleURLTypes和LSAppQueries配置），修改后保存生成新记录。</p>
+                </div>
+                <div class="proto-section">
+                    <div class="proto-section-title">操作流程</div>
+                    <div class="proto-flow"><span class="proto-step"><span class="proto-step-num">1</span>自动读取原配置</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">2</span>调整所属企业/母包</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">3</span>修改CFBundleURLTypes</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">4</span>修改LSAppQueries</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">5</span>更换渠道</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">6</span>保存</span></div>
+                </div>
+                <div class="proto-section">
+                    <div class="proto-section-title">iOS专属配置</div>
+                    <div class="proto-field"><span class="proto-field-name">CFBundleURLTypes</span><span class="proto-field-desc">原配置自动回填，支持增删组、修改URL identifier及内容数组。选择"是"后展开配置区</span></div>
+                    <div class="proto-field"><span class="proto-field-name">组管理</span><span class="proto-field-desc">每组可删除，仅剩一组时删除按钮隐藏，序号自动重排</span></div>
+                    <div class="proto-field"><span class="proto-field-name">LSAppQueriesSchemes</span><span class="proto-field-desc">白名单Scheme自动回填，可修改。选择"是"后展开文本域</span></div>
+                </div>
+                <div class="proto-section">
+                    <div class="proto-section-title">通用字段</div>
+                    <p class="proto-text">基础信息、游戏参数、打包参数（含OAID证书）、渠道与存储配置等与Android端一致。iOS端不显示Android动态权限等Android专属字段。所有字段均可修改，保存后生成新记录。</p>
+                </div>
+                <div class="proto-section">
+                    <div class="proto-section-title">业务规则</div>
+                    <div class="proto-field"><span class="proto-field-name">自动回填</span><span class="proto-field-desc">携带分包ID进入，自动读取packId/packFilePath/所属平台等完整配置</span></div>
+                    <div class="proto-field"><span class="proto-field-name">三端隔离</span><span class="proto-field-desc">切换到Android/PC端时，iOS专属配置自动隐藏</span></div>
+                </div>
+            </div>
+                        <div class="proto-panel" id="protoPanelPC">
+                <div class="proto-section">
+                    <div class="proto-section-title">页面用途</div>
+                    <p class="proto-text">为已添加的PC端母包<strong>创建子渠道分包任务</strong>。PC端字段精简，仅保留核心配置项。</p>
+                </div>
+                <div class="proto-section">
+                    <div class="proto-section-title">操作流程</div>
+                    <div class="proto-flow"><span class="proto-step"><span class="proto-step-num">1</span>选择所属企业</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">2</span>选择母包</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">3</span>参数自动填充</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">4</span>选择渠道</span><span class="proto-arrow">→</span><span class="proto-step"><span class="proto-step-num">5</span>提交保存</span></div>
+                </div>
+                <div class="proto-section">
+                    <div class="proto-section-title">PC端字段（仅保留10项）</div>
+                    <table class="proto-table">
+                        <tr><th>字段</th><th>说明</th></tr>
+                        <tr><td>游戏名称</td><td>选择母包后自动填充，必填</td></tr>
+                        <tr><td>系统类型</td><td>显示为"Windows"，只读</td></tr>
+                        <tr><td>游戏处理模式</td><td>固定为"分包模式"，只读</td></tr>
+                        <tr><td>游戏聚合类型</td><td>下拉选择（RPG/SLG/卡牌/休闲/MMO）</td></tr>
+                        <tr><td>联运申请ID</td><td>手动输入</td></tr>
+                        <tr><td>选择渠道</td><td>按所属企业过滤的渠道列表</td></tr>
+                        <tr><td>渠道出包资源Id</td><td>选择渠道后自动填充，点击可弹窗修改</td></tr>
+                        <tr><td>子渠道参数配置</td><td>配置AppId/AppKey</td></tr>
+                        <tr><td>渠道名称</td><td>选择渠道后自动填充，只读</td></tr>
+                        <tr><td>渠道出包版本号</td><td>手动输入</td></tr>
+                    </table>
+                </div>
+                <div class="proto-section">
+                    <div class="proto-section-title">不显示的字段</div>
+                    <p class="proto-text">PC端隐藏以下Android/iOS端字段：游戏包名修改、安装名、启动名、Icon修改、Logo修改、闪屏Logo、版本号、Android权限、OAID证书、iOS专属配置、Smali/Res处理模式、QQ/微信参数、存储与发布配置等。</p>
+                </div>
+            </div>
+
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渠道列表 - 在线分包管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;}
+        body {font-family: "Microsoft Yahei", sans-serif;background-color: #F2F3F5;color: #1D2129;}
+        :root {
+            --primary: #165DFF;--success: #00B42A;--warning: #FF7D00;--danger: #F53F3F;
+            --gray-100: #F2F3F5;--gray-200: #E5E6EB;--gray-300: #C9CDD4;
+            --gray-600: #86909C;--gray-900: #1D2129;
+        }
+        .content {padding: 24px;flex: 1;}
+        /* 卡片 */
+        .card {background: white;border-radius: 12px;box-shadow: 0 2px 8px rgba(0,0,0,0.06);}
+        .card-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;}
+        .card-title {font-size: 16px;font-weight: 600;color: var(--gray-900);}
+        .card-body {padding: 0;}
+        /* 按钮 */
+        .btn {padding: 8px 24px;border-radius: 8px;border: none;cursor: pointer;font-size: 14px;transition: all 0.3s;display: inline-flex;align-items: center;justify-content: center;gap: 6px;text-decoration: none;}
+        .btn-primary {background-color: var(--primary);color: white;}
+        .btn-primary:hover {background-color: #0D47A1;}
+        .btn-sm {padding: 4px 12px;font-size: 12px;border-radius: 6px;}
+        .btn-default {background-color: white;border: 1px solid var(--gray-200);color: var(--gray-900);}
+        .btn-default:hover {background-color: var(--gray-100);}
+        .btn-danger {background-color: var(--danger);color: white;}
+        .btn-danger:hover {background-color: #D92B2B;}
+        /* 标签 */
+        .tag {display: inline-block;padding: 4px 10px;border-radius: 6px;font-size: 12px;font-weight: 500;}
+        .tag-success {background: rgba(0, 180, 42, 0.1);color: var(--success);}
+        .tag-danger {background: rgba(245, 63, 63, 0.1);color: var(--danger);}
+        .tag-blue {background: rgba(22, 93, 255, 0.1);color: var(--primary);}
+        .tag-orange {background: rgba(255, 125, 0, 0.1);color: var(--warning);}
+        /* 表格 */
+        .table-wrapper {overflow-x: auto;}
+        .table {width: 100%;border-collapse: collapse;min-width: 1100px;}
+        .table th {padding: 12px 16px;background: var(--gray-100);font-weight: 500;text-align: left;font-size: 14px;border-bottom: 1px solid var(--gray-200);white-space: nowrap;}
+        .table td {padding: 16px;border-bottom: 1px solid var(--gray-200);font-size: 14px;}
+        .table tr:hover {background: rgba(22, 93, 255, 0.02);}
+        /* 消息提示 */
+        .message-box {position: fixed;top: 80px;right: 24px;padding: 12px 24px;border-radius: 8px;color: white;font-size: 14px;z-index: 99999;animation: slideIn 0.3s ease;max-width: 300px;}
+        .message-success {background: var(--success);}
+        .message-error {background: var(--danger);}
+        .message-warning {background: var(--warning);}
+        @keyframes slideIn {from {transform: translateX(100%);opacity: 0;} to {transform: translateX(0);opacity: 1;}}
+        @keyframes slideOut {from {transform: translateX(0);opacity: 1;} to {transform: translateX(100%);opacity: 0;}}
+        /* 弹窗 */
+        .modal-overlay {position: fixed;top: 0;left: 0;right: 0;bottom: 0;background: rgba(0,0,0,0.5);display: none;justify-content: center;align-items: center;z-index: 9999;}
+        .modal-overlay.show {display: flex;}
+        .modal {background: white;border-radius: 16px;padding: 0;width: 780px;max-width: 90vw;max-height: 90vh;overflow: hidden;animation: scaleIn 0.3s ease;display: flex;flex-direction: column;}
+        @keyframes scaleIn {
+            from {opacity: 0;transform: scale(0.95);}
+            to {opacity: 1;transform: scale(1);}
+        }
+        .modal-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;flex-shrink: 0;}
+        .modal-title {font-size: 18px;font-weight: 600;color: var(--gray-900);}
+        .modal-close {background: none;border: none;font-size: 24px;cursor: pointer;color: var(--gray-600);padding: 4px;}
+        .modal-close:hover {color: var(--gray-900);}
+        .modal-body {padding: 24px;overflow-y: auto;flex: 1;}
+        .modal-footer {padding: 16px 24px;border-top: 1px solid var(--gray-200);display: flex;justify-content: flex-end;gap: 12px;flex-shrink: 0;}
+        /* 表单 */
+        .form-group {margin-bottom: 20px;}
+        .form-label {display: block;margin-bottom: 8px;font-size: 14px;font-weight: 500;color: var(--gray-900);}
+        .form-label .required {color: var(--danger);}
+        .form-input {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;transition: all 0.2s;}
+        .form-input:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-input:disabled {background-color: var(--gray-100);cursor: not-allowed;color: var(--gray-600);}
+        .form-textarea {width: 100%;min-height: 72px;padding: 10px 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;resize: vertical;transition: all 0.2s;font-family: Consolas, Monaco, monospace;}
+        .form-textarea:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-select {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;background: white;transition: all 0.2s;appearance: auto;}
+        .form-select:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-row {display: grid;grid-template-columns: 1fr 1fr;gap: 16px;}
+        .form-row-3 {display: grid;grid-template-columns: 1fr 1fr 1fr;gap: 16px;}
+        /* 开关组件 */
+        .toggle-wrapper {display: flex;align-items: center;gap: 12px;}
+        .toggle-switch {position: relative;display: inline-block;width: 44px;height: 24px;flex-shrink: 0;}
+        .toggle-switch input {opacity: 0;width: 0;height: 0;}
+        .toggle-slider {position: absolute;cursor: pointer;top: 0;left: 0;right: 0;bottom: 0;background: var(--gray-300);border-radius: 24px;transition: all 0.3s;}
+        .toggle-slider:before {content: '';position: absolute;height: 18px;width: 18px;left: 3px;bottom: 3px;background: white;border-radius: 50%;transition: all 0.3s;box-shadow: 0 1px 3px rgba(0,0,0,0.2);}
+        .toggle-switch input:checked + .toggle-slider {background: var(--primary);}
+        .toggle-switch input:checked + .toggle-slider:before {transform: translateX(20px);}
+        .toggle-hint {font-size: 13px;color: var(--gray-600);}
+        /* 分区标题 */
+        .section-title {font-size: 13px;font-weight: 600;color: var(--primary);padding: 8px 0;margin-bottom: 16px;border-bottom: 1px solid rgba(22,93,255,0.15);display: flex;align-items: center;gap: 8px;}
+        .section-title i {font-size: 14px;}
+        /* 确认弹窗 */
+        .confirm-icon {font-size: 64px;text-align: center;margin-bottom: 16px;color: var(--danger);}
+        .confirm-message {text-align: center;font-size: 16px;color: var(--gray-900);margin-bottom: 8px;}
+        .confirm-desc {text-align: center;font-size: 14px;color: var(--gray-600);margin-bottom: 24px;}
+        /* 空状态 */
+        .empty-state {text-align: center;padding: 60px 20px;color: var(--gray-600);}
+        .empty-state i {font-size: 64px;margin-bottom: 16px;color: var(--gray-300);}
+        .empty-state p {font-size: 14px;}
+        /* 操作按钮组 */
+        .action-btns {display: flex;gap: 8px;}
+        /* 搜索区域 */
+        .search-bar {display: flex;align-items: center;gap: 12px;flex-wrap: wrap;padding: 16px 24px;border-bottom: 1px solid var(--gray-200);}
+        .search-input {width: 180px;height: 36px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 13px;outline: none;transition: all 0.2s;}
+        .search-input:focus {border-color: var(--primary);box-shadow: 0 0 0 2px rgba(22,93,255,0.08);}
+        .search-input::placeholder {color: var(--gray-300);}
+        .search-select {height: 36px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 13px;background: white;outline: none;appearance: auto;cursor: pointer;min-width: 120px;}
+        .search-select:focus {border-color: var(--primary);}
+        /* 分页 */
+        .pagination-bar {display: flex;align-items: center;justify-content: space-between;padding: 16px 24px;border-top: 1px solid var(--gray-200);}
+        .pagination-info {font-size: 13px;color: var(--gray-600);}
+        .pagination {display: flex;align-items: center;gap: 4px;}
+        .pagination-btn {width: 36px;height: 36px;border-radius: 8px;border: 1px solid var(--gray-200);background: white;cursor: pointer;display: flex;align-items: center;justify-content: center;font-size: 13px;color: var(--gray-900);transition: all 0.2s;}
+        .pagination-btn:hover:not(:disabled) {border-color: var(--primary);color: var(--primary);}
+        .pagination-btn.active {background: var(--primary);color: white;border-color: var(--primary);}
+        .pagination-btn:disabled {color: var(--gray-300);cursor: not-allowed;}
+        .pagination-ellipsis {padding: 0 4px;color: var(--gray-600);font-size: 13px;}
+        .pagination-size {margin-left: 16px;display: flex;align-items: center;gap: 8px;font-size: 13px;color: var(--gray-600);}
+        .pagination-size select {height: 32px;padding: 0 8px;border: 1px solid var(--gray-200);border-radius: 6px;font-size: 13px;outline: none;}
+        /* JSON只读展示 */
+        .json-display {font-family: Consolas, Monaco, monospace;font-size: 13px;background: var(--gray-100);padding: 10px 12px;border-radius: 8px;color: var(--gray-900);word-break: break-all;max-height: 80px;overflow-y: auto;line-height: 1.5;}
+        /* 平台选择弹窗 */
+        .platform-select-modal {width: 980px;max-height: 85vh;display: flex;flex-direction: column;overflow: hidden;}
+        .platform-select-table {width:100%;border-collapse:collapse;table-layout:fixed;}
+        .platform-select-table th {padding:10px 8px;background:var(--gray-100);font-weight:500;text-align:left;font-size:13px;border-bottom:1px solid var(--gray-200);white-space:nowrap;position:sticky;top:0;z-index:1;}
+        .platform-select-table td {padding:10px 8px;border-bottom:1px solid var(--gray-200);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        .platform-select-table .col-id {width:60px;}
+        .platform-select-table .col-name {width:110px;}
+        .platform-select-table .col-company {width:150px;}
+        .platform-select-table .col-legal {width:65px;}
+        .platform-select-table .col-valid {width:90px;}
+        .platform-select-table .col-operator {width:65px;}
+        .platform-select-table .col-time {width:130px;}
+        .platform-select-table .col-action {width:100px;}
+        .ps-select-btn {padding: 4px 16px;border: 1px solid var(--primary);background: white;color: var(--primary);border-radius: 6px;cursor: pointer;font-size: 13px;transition: all 0.2s;white-space: nowrap;}
+        .ps-select-btn:hover {background: rgba(22,93,255,0.04);}
+        .ps-select-btn.selected {background: var(--danger);color: white;border-color: var(--danger);}
+        .ps-select-btn.selected:hover {background: #D92B2B;}
+    </style>
+</head>
+<body>
+    <div id="mainPage">
+        <main class="content">
+                <!-- 搜索筛选区域 -->
+                <div class="card" style="margin-bottom: 16px;">
+                    <div class="search-bar">
+                        <div id="searchChannelNameContainer" style="width:180px;"></div>
+                        <div id="searchChannelCodeContainer" style="width:180px;"></div>
+                        <div id="searchCompanyNameContainer" style="width:180px;"></div>
+                        <select class="search-select" id="searchSystemType">
+                            <option value="">系统类型</option>
+                            <option value="ANDROID_SYS">Android</option>
+                            <option value="IOS_SYS">iOS</option>
+                            <option value="PC">PC</option>
+                        </select>
+                        <button class="btn btn-sm btn-primary" onclick="doSearch()">搜索</button>
+                        <button class="btn btn-sm btn-default" onclick="clearSearch()">清空</button>
+                    </div>
+                </div>
+
+                <!-- 渠道列表卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">渠道列表</h3>
+                        <button class="btn btn-primary" onclick="openChannelModal()">
+                            <i class="fa fa-plus"></i> 新增渠道
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-wrapper">
+                            <table class="table" id="channelTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width:70px">编号</th>
+                                        <th>渠道名称</th>
+                                        <th style="width:90px">系统类型</th>
+                                        <th>渠道标识</th>
+                                        <th>所属企业名称</th>
+                                        <th style="width:160px">最后更新时间</th>
+                                        <th style="width:140px">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="channelTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="empty-state" id="emptyState" style="display: none;">
+                            <i class="fa fa-sitemap"></i>
+                            <p>暂无渠道数据，点击"新增渠道"开始添加</p>
+                        </div>
+                        <!-- 分页 -->
+                        <div class="pagination-bar" id="paginationBar" style="display: none;">
+                            <div class="pagination-info" id="paginationInfo">显示第 1 至 15 项结果，共 0 项</div>
+                            <div class="pagination" id="paginationBtns"></div>
+                            <div class="pagination-size">
+                                每页
+                                <select id="pageSizeSelect" onchange="changePageSize()">
+                                    <option value="10">10</option>
+                                    <option value="15" selected>15</option>
+                                    <option value="20">20</option>
+                                    <option value="50">50</option>
+                                </select>
+                                条
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+    </div>
+
+
+    <!-- 新增/编辑渠道弹窗 - 对应 ChannelInfoBean -->
+    <div class="modal-overlay" id="channelModal">
+        <div class="modal" style="width: 960px;">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">新增渠道</div>
+                <button class="modal-close" onclick="closeChannelModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="channelForm">
+                    <div class="section-title"><i class="fa fa-building-o"></i> 平台信息</div>
+                    <input type="hidden" id="companyId" value="">
+                    <input type="hidden" id="companyName" value="">
+                    <div class="form-group">
+                        <label class="form-label">所属平台 <span class="required">*</span></label>
+                        <div class="form-input" id="selectedPlatformName" onclick="openPlatformSelectModal()" style="display:flex;align-items:center;cursor:pointer;color:var(--gray-600);user-select:none;line-height:44px;">点击选择所属平台</div>
+                    </div>
+
+                    <div class="section-title"><i class="fa fa-cube"></i> 渠道基本信息</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">渠道名称 <span class="required">*</span></label>
+                            <input type="text" id="channelName" class="form-input" placeholder="请输入渠道名称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">渠道标识 <span class="required">*</span></label>
+                            <input type="text" id="channelCode" class="form-input" placeholder="请输入渠道标识">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">系统类型 <span class="required">*</span></label>
+                            <select id="systemType" class="form-select">
+                                <option value="">请选择系统类型</option>
+                                <option value="ANDROID_SYS">Android</option>
+                                <option value="IOS_SYS">iOS</option>
+                                <option value="PC">PC端</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="visibility:hidden;"></div>
+                    </div>
+
+                    <div class="section-title"><i class="fa fa-key"></i> SDK配置</div>
+                    <div class="form-group">
+                        <label class="form-label">Key配置（JSON格式）</label>
+                        <textarea id="wsdkConfig" class="form-textarea" placeholder='{"Wsdk_GameId":"","Wsdk_Key":""}'></textarea>
+                    </div>
+
+                    <div class="section-title"><i class="fa fa-list-alt"></i> 渠道配置参数列表 <span style="font-weight:400;font-size:12px;color:var(--gray-600);">（可新增多个 2项输入 + 2项选择）</span></div>
+                    <div id="channelConfigParams"></div>
+
+                    <div class="section-title"><i class="fa fa-bullhorn"></i> 推广配置文件</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">是否存在推广配置文件</label>
+                            <select id="isExistPromoParamsFile" class="form-select">
+                                <option value="false">否</option>
+                                <option value="true">是</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="promoFileLocationGroup" style="display:none;">
+                            <label class="form-label">推广文件位置</label>
+                            <select id="promoParamsFileLocation" class="form-select">
+                                <option value="">请选择</option>
+                                <option value="ANDROIDMANIFEST">AndroidManifest.xml</option>
+                                <option value="ASSETS">Assets 资源目录</option>
+                                <option value="ANDROID_METAINF">安卓签名文件目录</option>
+                                <option value="STRING">String 资源目录</option>
+                                <option value="START_INTENT">启动意图</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" id="promoFileNameGroup" style="display:none;">
+                        <label class="form-label">推广文件名称</label>
+                        <input type="text" id="promoParamsFileName" class="form-input" placeholder="如: promo.json">
+                    </div>
+
+                    <div class="section-title"><i class="fa fa-code"></i> 入口类配置</div>
+                    <div class="form-group">
+                        <label class="form-label">渠道逻辑主入口类 <span style="font-weight:400;font-size:12px;color:var(--gray-600);">（classMain）</span></label>
+                        <input type="text" id="classMain" class="form-input" placeholder="如: com.channel.MainActivity">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">是否指定启动 Activity</label>
+                            <select id="isSetLaunchActivity" class="form-select">
+                                <option value="false">否</option>
+                                <option value="true">是</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="launchActivityGroup" style="display:none;">
+                            <label class="form-label">启动 Activity 名称</label>
+                            <input type="text" id="launchActivityName" class="form-input" placeholder="如: com.game.SplashActivity">
+                        </div>
+                    </div>
+
+                    <div class="section-title"><i class="fa fa-image"></i> 闪屏配置</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">是否存在闪屏页</label>
+                            <select id="isExistSplash" class="form-select" onchange="toggleSplashConfig()">
+                                <option value="false">否</option>
+                                <option value="true">是</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">是否存在闪屏 Logo</label>
+                            <select id="isExistSplashLogo" class="form-select" onchange="toggleSplashConfig()">
+                                <option value="false">否</option>
+                                <option value="true">是</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="splashConfigGroup" style="display:none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">横屏闪屏资源路径</label>
+                                <input type="text" id="landscapeSplash" class="form-input" placeholder="如: /res/splash_land.png">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">竖屏闪屏资源路径</label>
+                                <input type="text" id="portraitSplashResSavePath" class="form-input" placeholder="如: /res/splash_port.png">
+                            </div>
+                        </div>
+                        <div class="form-row" id="splashLogoGroup" style="display:none;">
+                            <div class="form-group">
+                                <label class="form-label">闪屏 Logo 资源路径</label>
+                                <input type="text" id="splashLogoResSavePath" class="form-input" placeholder="如: /res/splash_logo.png">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">闪屏 Logo 尺寸 (宽 × 高)</label>
+                                <div style="display:flex;gap:8px;">
+                                    <input type="text" id="splashLogoWidth" class="form-input" placeholder="宽(px)" style="flex:1;">
+                                    <input type="text" id="splashLogoHeight" class="form-input" placeholder="高(px)" style="flex:1;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title"><i class="fa fa-shield"></i> 签名配置</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">签名文件路径</label>
+                            <input type="text" id="signFileSavePath" class="form-input" placeholder="如: /keystore/channel.keystore">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">签名别名</label>
+                            <input type="text" id="signAlias" class="form-input" placeholder="如: channel_alias">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">签名密码</label>
+                        <input type="password" id="signPwd" class="form-input" placeholder="请输入签名密码">
+                    </div>
+
+                    <div class="section-title"><i class="fa fa-info-circle"></i> 操作记录 <span style="font-weight:400;font-size:12px;color:var(--gray-600);">（自动记录）</span></div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">最后操作人员</label>
+                            <input type="text" id="lastOperator" class="form-input" disabled placeholder="系统自动记录">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">最后操作时间</label>
+                            <input type="text" id="lastOperateTime" class="form-input" disabled placeholder="系统自动记录">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeChannelModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveChannel()"><i class="fa fa-check"></i> 保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 平台选择弹窗（表格样式，单选） -->
+    <div class="modal-overlay" id="platformSelectModal">
+        <div class="modal platform-select-modal">
+            <div class="modal-header">
+                <div class="modal-title">选择所属企业</div>
+                <button class="modal-close" onclick="closePlatformSelectModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:16px 24px;overflow:hidden;display:flex;flex-direction:column;">
+                <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap;">
+                    <input type="text" class="form-input" id="ps_searchInput" placeholder="请输入平台名称搜索" style="width:200px;height:36px;font-size:13px;" oninput="renderPlatformSelectTable()">
+                    <button class="btn btn-sm btn-primary" onclick="renderPlatformSelectTable()"><i class="fa fa-search"></i> 搜索</button>
+                </div>
+                <div style="overflow:auto;max-height:400px;">
+                    <table class="platform-select-table" id="ps_table">
+                        <thead>
+                            <tr>
+                                <th class="col-id">编号</th>
+                                <th class="col-name">平台名称</th>
+                                <th class="col-company">企业名称</th>
+                                <th class="col-legal">企业法人</th>
+                                <th class="col-valid">服务到期</th>
+                                <th class="col-operator">操作人</th>
+                                <th class="col-time">更新时间</th>
+                                <th class="col-action">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ps_tbody"></tbody>
+                    </table>
+                    <div id="ps_empty" style="display:none;text-align:center;padding:40px;color:var(--gray-600);">暂无匹配的企业平台</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="confirmPlatformSelect()">确定</button>
+                <button class="btn btn-default" onclick="closePlatformSelectModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal" style="width: 420px;">
+            <div class="modal-header">
+                <div class="modal-title">确认删除</div>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon"><i class="fa fa-exclamation-triangle"></i></div>
+                <div class="confirm-message">确定要删除该渠道吗？</div>
+                <div class="confirm-desc">删除后数据将无法恢复，请谨慎操作</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeDeleteModal()">取消</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="导航.js"></script>
+    <script src="common.js"></script>
+    <script src="config-param-component.js"></script>
+    <script>
+        // ===== 渠道数据管理 =====
+        const CHANNEL_KEY = 'repkg_channels';
+
+        function getChannels() {
+            const data = localStorage.getItem(CHANNEL_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveChannels(channels) {
+            localStorage.setItem(CHANNEL_KEY, JSON.stringify(channels));
+        }
+
+        // ===== 工具函数 =====
+        function formatDateTime(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const h = String(date.getHours()).padStart(2, '0');
+            const min = String(date.getMinutes()).padStart(2, '0');
+            const s = String(date.getSeconds()).padStart(2, '0');
+            return `${y}-${m}-${d} ${h}:${min}:${s}`;
+        }
+
+        function escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // ===== 默认数据初始化 =====
+        function initDefaultChannels() {
+            if (!localStorage.getItem(CHANNEL_KEY)) {
+                const now = formatDateTime(new Date());
+                const companyNames = [
+                    '北京字节跳动科技有限公司',
+                    '北京快手科技有限公司',
+                    '深圳市腾讯计算机系统有限公司',
+                    '阿里巴巴（中国）有限公司',
+                    '华为技术有限公司',
+                    '小米科技有限责任公司',
+                ];
+
+            const defaultChannels = [
+                { companyId: '0001', companyName: companyNames[0], channelName: '抖音官方渠道', channelCode: 'douyin_official', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_dy_001', Wsdk_Key: 'key_dy_abc123def456' } },
+                { companyId: '0001', companyName: companyNames[0], channelName: '抖音极速版渠道', channelCode: 'douyin_lite', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_dy_002', Wsdk_Key: 'key_dy_ghi789jkl012' } },
+                { companyId: '0001', companyName: companyNames[0], channelName: '抖音iOS渠道', channelCode: 'douyin_ios', systemType: 'IOS_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_dy_003', Wsdk_Key: 'key_dy_mno345pqr678' } },
+                { companyId: '0002', companyName: companyNames[1], channelName: '快手官方渠道', channelCode: 'kuaishou_official', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_ks_001', Wsdk_Key: 'key_ks_stu901vwx234' } },
+                { companyId: '0002', companyName: companyNames[1], channelName: '快手极速版渠道', channelCode: 'kuaishou_lite', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_ks_002', Wsdk_Key: 'key_ks_yz567abc890' } },
+                { companyId: '0002', companyName: companyNames[1], channelName: '快手iOS渠道', channelCode: 'kuaishou_ios', systemType: 'IOS_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_ks_003', Wsdk_Key: 'key_ks_def123ghi456' } },
+                { companyId: '0003', companyName: companyNames[2], channelName: '应用宝渠道', channelCode: 'yingyongbao', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_yyb_001', Wsdk_Key: 'key_yyb_jkl789mno012' } },
+                { companyId: '0003', companyName: companyNames[2], channelName: '微信小游戏渠道', channelCode: 'wechat_mini', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_wx_001', Wsdk_Key: 'key_wx_pqr345stu678' } },
+                { companyId: '0003', companyName: companyNames[2], channelName: 'QQ游戏渠道', channelCode: 'qq_game', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_qq_001', Wsdk_Key: 'key_qq_vwx901yz234' } },
+                { companyId: '0004', companyName: companyNames[3], channelName: '阿里游戏渠道', channelCode: 'aligame', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_ali_001', Wsdk_Key: 'key_ali_abc567def890' } },
+                { companyId: '0004', companyName: companyNames[3], channelName: '淘宝游戏渠道', channelCode: 'taobao_game', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_tb_001', Wsdk_Key: 'key_tb_ghi123jkl456' } },
+                { companyId: '0005', companyName: companyNames[4], channelName: '华为应用市场渠道', channelCode: 'huawei_store', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_hw_001', Wsdk_Key: 'key_hw_mno789pqr012' } },
+                { companyId: '0005', companyName: companyNames[4], channelName: '华为游戏中心渠道', channelCode: 'huawei_game', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_hw_002', Wsdk_Key: 'key_hw_stu345vwx678' } },
+                { companyId: '0005', companyName: companyNames[4], channelName: '华为iOS渠道', channelCode: 'huawei_ios', systemType: 'IOS_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_hw_003', Wsdk_Key: 'key_hw_yz901abc234' } },
+                { companyId: '0006', companyName: companyNames[5], channelName: '小米应用商店渠道', channelCode: 'xiaomi_store', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_xm_001', Wsdk_Key: 'key_xm_def567ghi890' } },
+                { companyId: '0006', companyName: companyNames[5], channelName: '小米游戏中心渠道', channelCode: 'xiaomi_game', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_xm_002', Wsdk_Key: 'key_xm_jkl123mno456' } },
+                { companyId: '0001', companyName: companyNames[0], channelName: '火山小视频渠道', channelCode: 'huoshan', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_hs_001', Wsdk_Key: 'key_hs_pqr789stu012' } },
+                { companyId: '0003', companyName: companyNames[2], channelName: '腾讯视频渠道', channelCode: 'tencent_video', systemType: 'ANDROID_SYS', lastOperator: '管理员', lastOperateTime: now, wsdkConfig: { Wsdk_GameId: 'wsdk_tx_001', Wsdk_Key: 'key_tx_vwx345yz678' } },
+            ];
+                saveChannels(defaultChannels);
+            }
+        }
+
+        // ===== 搜索与分页状态 =====
+        let currentPage = 1;
+        let pageSize = 15;
+        let filteredChannelsCache = [];
+
+        let searchChannelNameSelect, searchChannelCodeSelect, searchCompanyNameSelect;
+
+        function initSearchSelect() {
+            const channels = getChannels();
+            searchChannelNameSelect = new SearchSelect('searchChannelNameContainer', {
+                placeholder: '渠道名称',
+                data: [...new Set(channels.map(c => c.channelName).filter(Boolean))].map(v => ({ value: v, label: v })),
+                onChange: () => doSearch(),
+                width: '180px'
+            });
+            searchChannelCodeSelect = new SearchSelect('searchChannelCodeContainer', {
+                placeholder: '渠道标识',
+                data: [...new Set(channels.map(c => c.channelCode).filter(Boolean))].map(v => ({ value: v, label: v })),
+                onChange: () => doSearch(),
+                width: '180px'
+            });
+            searchCompanyNameSelect = new SearchSelect('searchCompanyNameContainer', {
+                placeholder: '所属企业名称',
+                data: [...new Set(channels.map(c => c.companyName).filter(Boolean))].map(v => ({ value: v, label: v })),
+                onChange: () => doSearch(),
+                width: '180px'
+            });
+        }
+
+        function getFilteredChannels() {
+            const searchChannelName = searchChannelNameSelect ? searchChannelNameSelect.getValue().toLowerCase() : '';
+            const searchChannelCode = searchChannelCodeSelect ? searchChannelCodeSelect.getValue().toLowerCase() : '';
+            const searchCompanyName = searchCompanyNameSelect ? searchCompanyNameSelect.getValue().toLowerCase() : '';
+            const searchSystemType = document.getElementById('searchSystemType').value;
+
+            let channels = getChannels();
+            if (searchChannelName) channels = channels.filter(c => c.channelName.toLowerCase().includes(searchChannelName));
+            if (searchChannelCode) channels = channels.filter(c => c.channelCode.toLowerCase().includes(searchChannelCode));
+            if (searchCompanyName) channels = channels.filter(c => c.companyName.toLowerCase().includes(searchCompanyName));
+            if (searchSystemType) channels = channels.filter(c => c.systemType === searchSystemType);
+            return channels;
+        }
+
+        function refreshData() {
+            filteredChannelsCache = getFilteredChannels();
+            currentPage = Math.min(currentPage, Math.ceil(filteredChannelsCache.length / pageSize) || 1);
+            renderChannelList();
+        }
+
+        function doSearch() {
+            currentPage = 1;
+            refreshData();
+        }
+
+        function clearSearch() {
+            if (searchChannelNameSelect) searchChannelNameSelect.clear();
+            if (searchChannelCodeSelect) searchChannelCodeSelect.clear();
+            if (searchCompanyNameSelect) searchCompanyNameSelect.clear();
+            document.getElementById('searchSystemType').value = '';
+            currentPage = 1;
+            refreshData();
+        }
+
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSizeSelect').value);
+            currentPage = 1;
+            refreshData();
+        }
+
+        // ===== 渲染渠道列表 =====
+        function renderChannelList() {
+            const channels = filteredChannelsCache;
+            const totalItems = channels.length;
+            const totalPages = Math.ceil(totalItems / pageSize) || 1;
+            const start = (currentPage - 1) * pageSize;
+            const end = Math.min(start + pageSize, totalItems);
+            const pageChannels = channels.slice(start, end);
+
+            const tableBody = document.getElementById('channelTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.getElementById('channelTable');
+            const paginationBar = document.getElementById('paginationBar');
+            const paginationInfo = document.getElementById('paginationInfo');
+
+            if (totalItems === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                paginationBar.style.display = 'none';
+                return;
+            }
+
+            table.style.display = '';
+            emptyState.style.display = 'none';
+            paginationBar.style.display = 'flex';
+
+            paginationInfo.textContent = totalItems > 0
+                ? `显示第 ${start + 1} 至 ${end} 项结果，共 ${totalItems} 项`
+                : '暂无数据';
+
+            tableBody.innerHTML = pageChannels.map((c, i) => {
+                let systemTag = '';
+                if (c.systemType === 'IOS_SYS') {
+                    systemTag = '<span class="tag tag-blue">iOS</span>';
+                } else if (c.systemType === 'PC') {
+                    systemTag = '<span class="tag tag-orange">PC</span>';
+                } else {
+                    systemTag = '<span class="tag tag-orange">Android</span>';
+                }
+                const displayId = String(start + i + 1).padStart(4, '0');
+
+                return `
+                    <tr>
+                        <td><code style="background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:12px;">${displayId}</code></td>
+                        <td><strong>${escHtml(c.channelName)}</strong></td>
+                        <td>${systemTag}</td>
+                        <td>${escHtml(c.channelCode)}</td>
+                        <td>${escHtml(c.companyName)}</td>
+                        <td style="font-size:13px;color:var(--gray-600);">${c.lastOperateTime || '-'}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn btn-sm btn-default" onclick="editChannel(${start + i})" title="编辑渠道">
+                                    编辑
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${start + i})" title="删除渠道">
+                                    删除
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            const container = document.getElementById('paginationBtns');
+            let html = '';
+
+            // 上一页
+            html += `<button class="pagination-btn" onclick="goToPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}><i class="fa fa-chevron-left"></i></button>`;
+
+            // 页码
+            const pages = [];
+            if (totalPages <= 7) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                if (currentPage > 3) pages.push('...');
+                let startP = Math.max(2, currentPage - 1);
+                let endP = Math.min(totalPages - 1, currentPage + 1);
+                if (currentPage <= 3) endP = 4;
+                if (currentPage >= totalPages - 2) startP = totalPages - 3;
+                for (let i = startP; i <= endP; i++) pages.push(i);
+                if (currentPage < totalPages - 2) pages.push('...');
+                pages.push(totalPages);
+            }
+
+            pages.forEach(p => {
+                if (p === '...') {
+                    html += '<span class="pagination-ellipsis">...</span>';
+                } else {
+                    html += `<button class="pagination-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+                }
+            });
+
+            // 下一页
+            html += `<button class="pagination-btn" onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}><i class="fa fa-chevron-right"></i></button>`;
+
+            container.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            const totalPages = Math.ceil(filteredChannelsCache.length / pageSize);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            refreshData();
+        }
+
+        // ===== 弹窗操作 =====
+        let editingGlobalIndex = -1; // 在原始数组中的索引
+        let channelConfigParamList = null; // 配置参数组件实例
+
+        function openChannelModal(globalIndex) {
+            const modal = document.getElementById('channelModal');
+            const title = document.getElementById('modalTitle');
+            const form = document.getElementById('channelForm');
+
+            // 重置选择平台状态
+            pendingPlatformId = null;
+            const platformDisplay = document.getElementById('selectedPlatformName');
+            platformDisplay.textContent = '点击选择所属平台';
+            platformDisplay.style.color = 'var(--gray-600)';
+            platformDisplay.style.fontWeight = 'normal';
+
+            // 初始化配置参数组件（每次打开都重新创建）
+            if (!channelConfigParamList) {
+                channelConfigParamList = new ConfigParamList('channelConfigParams', [], {
+                    title: '渠道配置参数列表',
+                    addBtnText: '+ 新增配置参数'
+                });
+            } else {
+                channelConfigParamList.setData([]);
+            }
+
+            if (globalIndex !== undefined && globalIndex !== null) {
+                editingGlobalIndex = globalIndex;
+                const channels = getChannels();
+                const channel = channels[globalIndex];
+                if (!channel) return;
+                title.textContent = '编辑渠道';
+
+                document.getElementById('companyId').value = channel.companyId || '';
+                document.getElementById('companyName').value = channel.companyName || '';
+
+                // 回显已选企业
+                if (channel.companyId && channel.companyName) {
+                    pendingPlatformId = channel.companyId;
+                    const label = channel.companyName;
+                    platformDisplay.textContent = label;
+                    platformDisplay.style.color = 'var(--primary)';
+                    platformDisplay.style.fontWeight = '600';
+                }
+
+                document.getElementById('channelName').value = channel.channelName || '';
+                document.getElementById('channelCode').value = channel.channelCode || '';
+                document.getElementById('systemType').value = channel.systemType || '';
+
+                // 回显Wsdk配置
+                if (channel.wsdkConfig && Object.keys(channel.wsdkConfig).length > 0) {
+                    document.getElementById('wsdkConfig').value = JSON.stringify(channel.wsdkConfig, null, 2);
+                } else {
+                    document.getElementById('wsdkConfig').value = '';
+                }
+
+                // 回显配置参数列表
+                channelConfigParamList.setData(channel.configParameterInfoBeanList || []);
+
+                // 回显推广配置
+                document.getElementById('isExistPromoParamsFile').value = String(!!channel.isExistPromoParamsFile);
+                document.getElementById('promoParamsFileLocation').value = channel.promoParamsFileLocation || '';
+                document.getElementById('promoParamsFileName').value = channel.promoParamsFileName || '';
+
+                // 回显入口类
+                document.getElementById('classMain').value = channel.classMain || '';
+                document.getElementById('isSetLaunchActivity').value = String(!!channel.isSetLaunchActivity);
+                document.getElementById('launchActivityName').value = channel.launchActivityName || '';
+
+                // 回显闪屏
+                document.getElementById('isExistSplash').value = String(!!channel.isExistSplash);
+                document.getElementById('isExistSplashLogo').value = String(!!channel.isExistSplashLogo);
+                document.getElementById('landscapeSplash').value = channel.landscapeSplash || '';
+                document.getElementById('portraitSplashResSavePath').value = channel.portraitSplashResSavePath || '';
+                document.getElementById('splashLogoResSavePath').value = channel.splashLogoResSavePath || '';
+                document.getElementById('splashLogoWidth').value = channel.splashLogoWidth || '';
+                document.getElementById('splashLogoHeight').value = channel.splashLogoHeight || '';
+
+                // 回显签名
+                document.getElementById('signFileSavePath').value = channel.signFileSavePath || '';
+                document.getElementById('signAlias').value = channel.signAlias || '';
+                document.getElementById('signPwd').value = channel.signPwd || '';
+
+                document.getElementById('lastOperator').value = channel.lastOperator || '';
+                document.getElementById('lastOperateTime').value = channel.lastOperateTime || '';
+            } else {
+                editingGlobalIndex = -1;
+                title.textContent = '新增渠道';
+                form.reset();
+
+                document.getElementById('companyId').value = '';
+                document.getElementById('companyName').value = '';
+                document.getElementById('lastOperator').value = '';
+                document.getElementById('lastOperateTime').value = '';
+            }
+
+            // 触发联动显示
+            togglePromoFile();
+            toggleLaunchActivity();
+            toggleSplashConfig();
+            modal.classList.add('show');
+        }
+
+        // 联动：是否配置推广文件 → 显示位置/名称
+        function togglePromoFile() {
+            const isExist = document.getElementById('isExistPromoParamsFile').value === 'true';
+            document.getElementById('promoFileLocationGroup').style.display = isExist ? '' : 'none';
+            document.getElementById('promoFileNameGroup').style.display = isExist ? '' : 'none';
+        }
+        // 联动：是否指定启动Activity
+        function toggleLaunchActivity() {
+            const isSet = document.getElementById('isSetLaunchActivity').value === 'true';
+            document.getElementById('launchActivityGroup').style.display = isSet ? '' : 'none';
+        }
+        // 联动：闪屏配置
+        function toggleSplashConfig() {
+            const isExistSplash = document.getElementById('isExistSplash').value === 'true';
+            const isExistSplashLogo = document.getElementById('isExistSplashLogo').value === 'true';
+            document.getElementById('splashConfigGroup').style.display = isExistSplash ? '' : 'none';
+            document.getElementById('splashLogoGroup').style.display = isExistSplashLogo ? '' : 'none';
+        }
+
+        // 绑定联动事件
+        document.getElementById('isExistPromoParamsFile').addEventListener('change', togglePromoFile);
+        document.getElementById('isSetLaunchActivity').addEventListener('change', toggleLaunchActivity);
+
+        function setSwitch(id, value, hintId, falseText, trueText) {
+            const checkbox = document.getElementById(id);
+            checkbox.checked = value;
+            const hint = document.getElementById(hintId);
+            if (hint) hint.textContent = value ? trueText : falseText;
+        }
+
+        function closeChannelModal() {
+            document.getElementById('channelModal').classList.remove('show');
+        }
+
+        function saveChannel() {
+            const channelName = document.getElementById('channelName').value.trim();
+            const channelCode = document.getElementById('channelCode').value.trim();
+            const companyId = document.getElementById('companyId').value.trim();
+            const companyName = document.getElementById('companyName').value.trim();
+            const systemType = document.getElementById('systemType').value;
+
+            if (!companyId || !companyName) { UI.showMessage('error', '请选择所属企业'); return; }
+            if (!channelName) { UI.showMessage('error', '请输入渠道名称'); return; }
+            if (!channelCode) { UI.showMessage('error', '请输入渠道标识'); return; }
+            if (!systemType) { UI.showMessage('error', '请选择系统类型'); return; }
+
+            // 解析Wsdk配置
+            let wsdkConfig = {};
+            const wsdkConfigStr = document.getElementById('wsdkConfig').value.trim();
+            if (wsdkConfigStr) {
+                try {
+                    wsdkConfig = JSON.parse(wsdkConfigStr);
+                } catch (e) {
+                    UI.showMessage('error', 'Key配置格式错误，请输入正确的JSON格式');
+                    return;
+                }
+            }
+
+            const now = formatDateTime(new Date());
+            const currentUser = Storage.getCurrentUser();
+            const operator = currentUser ? (currentUser.nickname || currentUser.username) : 'admin';
+
+            const channel = {
+                companyId,
+                companyName,
+                channelName,
+                channelCode,
+                systemType,
+                wsdkConfig,
+                // 配置参数列表
+                configParameterInfoBeanList: channelConfigParamList ? channelConfigParamList.getData() : [],
+                // 推广文件配置
+                isExistPromoParamsFile: document.getElementById('isExistPromoParamsFile').value === 'true',
+                promoParamsFileLocation: document.getElementById('promoParamsFileLocation').value || '',
+                promoParamsFileName: document.getElementById('promoParamsFileName').value.trim() || '',
+                // 入口类
+                classMain: document.getElementById('classMain').value.trim() || '',
+                isSetLaunchActivity: document.getElementById('isSetLaunchActivity').value === 'true',
+                launchActivityName: document.getElementById('launchActivityName').value.trim() || '',
+                // 闪屏
+                isExistSplash: document.getElementById('isExistSplash').value === 'true',
+                isExistSplashLogo: document.getElementById('isExistSplashLogo').value === 'true',
+                landscapeSplash: document.getElementById('landscapeSplash').value.trim() || '',
+                portraitSplashResSavePath: document.getElementById('portraitSplashResSavePath').value.trim() || '',
+                splashLogoResSavePath: document.getElementById('splashLogoResSavePath').value.trim() || '',
+                splashLogoWidth: document.getElementById('splashLogoWidth').value.trim() || '',
+                splashLogoHeight: document.getElementById('splashLogoHeight').value.trim() || '',
+                // 签名
+                signFileSavePath: document.getElementById('signFileSavePath').value.trim() || '',
+                signAlias: document.getElementById('signAlias').value.trim() || '',
+                signPwd: document.getElementById('signPwd').value.trim() || '',
+                lastOperator: operator,
+                lastOperateTime: now
+            };
+
+            const channels = getChannels();
+
+            if (editingGlobalIndex >= 0) {
+                channels[editingGlobalIndex] = channel;
+                UI.showMessage('success', '渠道信息更新成功');
+            } else {
+                channels.push(channel);
+                UI.showMessage('success', '渠道添加成功');
+            }
+
+            saveChannels(channels);
+            closeChannelModal();
+            refreshData();
+        }
+
+        function editChannel(displayIndex) {
+            // displayIndex 是在当前过滤列表中的位置，需要找到在原始数据中的索引
+            const channelRef = filteredChannelsCache[displayIndex];
+            if (!channelRef) return;
+            const allChannels = getChannels();
+            // 通过匹配关键字段找到原始索引
+            const globalIndex = allChannels.findIndex(c =>
+                c.channelCode === channelRef.channelCode &&
+                c.channelName === channelRef.channelName &&
+                c.companyId === channelRef.companyId
+            );
+            if (globalIndex >= 0) {
+                openChannelModal(globalIndex);
+            }
+        }
+
+        function openDeleteModal(displayIndex) {
+            deletingDisplayIndex = displayIndex;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        function closeDeleteModal() {
+            deletingDisplayIndex = -1;
+            document.getElementById('deleteModal').classList.remove('show');
+        }
+
+        let deletingDisplayIndex = -1;
+
+        function confirmDelete() {
+            if (deletingDisplayIndex < 0) return;
+            const channelRef = filteredChannelsCache[deletingDisplayIndex];
+            if (!channelRef) return;
+            const channels = getChannels();
+            const globalIndex = channels.findIndex(c =>
+                c.channelCode === channelRef.channelCode &&
+                c.channelName === channelRef.channelName &&
+                c.companyId === channelRef.companyId
+            );
+            if (globalIndex >= 0) {
+                channels.splice(globalIndex, 1);
+                saveChannels(channels);
+                UI.showMessage('success', '渠道已删除');
+            }
+            closeDeleteModal();
+            refreshData();
+        }
+
+        // ===== 所属企业选择（平台选择弹窗） =====
+        let pendingPlatformId = null;
+
+        function getAvailablePlatforms() {
+            const data = localStorage.getItem('repkg_platforms');
+            if (!data) return [];
+            return JSON.parse(data).filter(p => p.platformStatus !== false);
+        }
+
+        function openPlatformSelectModal() {
+            const currentId = document.getElementById('companyId').value;
+            pendingPlatformId = currentId || null;
+            document.getElementById('ps_searchInput').value = '';
+            document.getElementById('platformSelectModal').classList.add('show');
+            renderPlatformSelectTable();
+        }
+
+        function closePlatformSelectModal() {
+            document.getElementById('platformSelectModal').classList.remove('show');
+        }
+
+        function renderPlatformSelectTable() {
+            const keyword = document.getElementById('ps_searchInput').value.toLowerCase();
+            let platforms = getAvailablePlatforms();
+            if (keyword) {
+                platforms = platforms.filter(p =>
+                    (p.platformName && p.platformName.toLowerCase().includes(keyword)) ||
+                    (p.companyName && p.companyName.toLowerCase().includes(keyword)) ||
+                    (p.legalPerson && p.legalPerson.toLowerCase().includes(keyword))
+                );
+            }
+
+            const tbody = document.getElementById('ps_tbody');
+            const empty = document.getElementById('ps_empty');
+
+            if (platforms.length === 0) {
+                document.getElementById('ps_table').style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            document.getElementById('ps_table').style.display = '';
+            empty.style.display = 'none';
+
+            tbody.innerHTML = platforms.map(p => {
+                const isSelected = pendingPlatformId === p.id;
+                return `
+                    <tr>
+                        <td class="col-id"><code style="background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:12px;">${escHtml(p.id)}</code></td>
+                        <td class="col-name"><strong>${escHtml(p.platformName)}</strong></td>
+                        <td class="col-company">${escHtml(p.companyName) || '-'}</td>
+                        <td class="col-legal">${escHtml(p.legalPerson) || '-'}</td>
+                        <td class="col-valid">${p.validUntil || '-'}</td>
+                        <td class="col-operator">${escHtml(p.modifier) || escHtml(p.creator) || '-'}</td>
+                        <td class="col-time">${escHtml(p.modifiedAt) || escHtml(p.updatedAt) || '-'}</td>
+                        <td class="col-action">
+                            <button class="ps-select-btn${isSelected ? ' selected' : ''}" onclick="togglePlatformPick('${p.id}','${escHtml(p.platformName)}','${escHtml(p.companyName) || ''}')">
+                                ${isSelected ? '已选中' : '选择'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function togglePlatformPick(id, name, companyName) {
+            if (pendingPlatformId === id) {
+                pendingPlatformId = null;
+            } else {
+                pendingPlatformId = id;
+            }
+            renderPlatformSelectTable();
+        }
+
+        function confirmPlatformSelect() {
+            if (pendingPlatformId) {
+                const platforms = getAvailablePlatforms();
+                const found = platforms.find(p => p.id === pendingPlatformId);
+                if (found) {
+                    document.getElementById('companyId').value = found.id;
+                    document.getElementById('companyName').value = found.companyName || found.platformName;
+                    const display = document.getElementById('selectedPlatformName');
+                    const label = found.companyName
+                        ? `${found.platformName}（${found.companyName}）`
+                        : found.platformName;
+                    display.textContent = label;
+                    display.style.color = 'var(--primary)';
+                    display.style.fontWeight = '600';
+                }
+            } else {
+                document.getElementById('companyId').value = '';
+                document.getElementById('companyName').value = '';
+                const display = document.getElementById('selectedPlatformName');
+                display.textContent = '点击选择所属平台';
+                display.style.color = 'var(--gray-600)';
+                display.style.fontWeight = 'normal';
+            }
+            closePlatformSelectModal();
+        }
+
+        // ===== 初始化默认平台数据（供企业选择使用） =====
+        function initDefaultPlatforms() {
+            if (!localStorage.getItem('repkg_platforms')) {
+                const now = formatDateTime(new Date());
+                const defaults = [
+                    { id: '0001', platformName: '抖音平台', companyName: '北京字节跳动科技有限公司', creditCode: '91110108MA004YJ47P', legalPerson: '张一鸣', registerAddress: '北京市海淀区知春路甲48号', companyStatus: 'normal', platformStatus: true, validUntil: '2027-12-31', monthlyLimit: false, monthlyLimitCount: 0, creator: '管理员', createdAt: now, modifier: '管理员', modifiedAt: now },
+                    { id: '0002', platformName: '快手平台', companyName: '北京快手科技有限公司', creditCode: '91110108MA004YDR17', legalPerson: '宿华', registerAddress: '北京市海淀区上地西路6号', companyStatus: 'normal', platformStatus: true, validUntil: '2026-12-31', monthlyLimit: true, monthlyLimitCount: 500, creator: '管理员', createdAt: now, modifier: '管理员', modifiedAt: now },
+                    { id: '0003', platformName: '腾讯应用宝', companyName: '深圳市腾讯计算机系统有限公司', creditCode: '914403001922038216', legalPerson: '马化腾', registerAddress: '深圳市南山区粤海街道', companyStatus: 'normal', platformStatus: true, validUntil: '2028-06-30', monthlyLimit: false, monthlyLimitCount: 0, creator: '管理员', createdAt: now, modifier: '管理员', modifiedAt: now },
+                    { id: '0004', platformName: '阿里游戏', companyName: '阿里巴巴（中国）有限公司', creditCode: '91330100755355483B', legalPerson: '蒋凡', registerAddress: '杭州市余杭区文一西路969号', companyStatus: 'normal', platformStatus: true, validUntil: '2027-09-30', monthlyLimit: true, monthlyLimitCount: 1000, creator: '管理员', createdAt: now, modifier: '管理员', modifiedAt: now },
+                    { id: '0005', platformName: '华为应用市场', companyName: '华为技术有限公司', creditCode: '914403001922038219', legalPerson: '赵明', registerAddress: '深圳市龙岗区坂田华为基地', companyStatus: 'normal', platformStatus: true, validUntil: '2028-03-31', monthlyLimit: false, monthlyLimitCount: 0, creator: '管理员', createdAt: now, modifier: '管理员', modifiedAt: now },
+                    { id: '0006', platformName: '小米商店', companyName: '小米科技有限责任公司', creditCode: '91110108551385082Q', legalPerson: '雷军', registerAddress: '北京市海淀区清河中街68号', companyStatus: 'normal', platformStatus: true, validUntil: '2027-06-30', monthlyLimit: false, monthlyLimitCount: 0, creator: '管理员', createdAt: now, modifier: '管理员', modifiedAt: now },
+                ];
+                localStorage.setItem('repkg_platforms', JSON.stringify(defaults));
+            }
+        }
+
+        // ===== 页面初始化 =====
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Navigation && Navigation.init) {
+                Navigation.init('渠道列表');
+            }
+            
+            if (!UI.checkLogin()) return;
+            initDefaultPlatforms();
+            initDefaultChannels();
+            UI.initUserInfo();
+            UI.initUserDropdown();
+            // 绑定开关提示事件
+            document.querySelectorAll('.toggle-switch input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const hintId = this.id + 'Hint';
+                    const hint = document.getElementById(hintId);
+                    if (hint) {
+                        hint.textContent = this.checked ? '是' : '否';
+                    }
+                });
+            });
+
+            initSearchSelect();
+            refreshData();
+        });
+    </script>
+</body>
+</html>
+

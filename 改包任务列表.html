@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务列表 - 在线分包管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;}
+        body {font-family: "Microsoft Yahei", sans-serif;background-color: #F2F3F5;color: #1D2129;}
+        :root {
+            --primary: #165DFF;--success: #00B42A;--warning: #FF7D00;--danger: #F53F3F;
+            --gray-100: #F2F3F5;--gray-200: #E5E6EB;--gray-300: #C9CDD4;
+            --gray-600: #86909C;--gray-900: #1D2129;
+        }
+        .content {padding: 24px;flex: 1;}
+        /* 卡片 */
+        .card {background: white;border-radius: 12px;box-shadow: 0 2px 8px rgba(0,0,0,0.06);}
+        .card-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;}
+        .card-title {font-size: 16px;font-weight: 600;color: var(--gray-900);}
+        .card-body {padding: 24px;}
+        /* 按钮 */
+        .btn {padding: 8px 24px;border-radius: 8px;border: none;cursor: pointer;font-size: 14px;transition: all 0.3s;display: inline-flex;align-items: center;justify-content: center;gap: 6px;text-decoration: none;}
+        .btn-primary {background-color: var(--primary);color: white;}
+        .btn-primary:hover {background-color: #0D47A1;}
+        .btn-sm {padding: 4px 12px;font-size: 12px;border-radius: 6px;}
+        .btn-default {background-color: white;border: 1px solid var(--gray-200);color: var(--gray-900);}
+        .btn-default:hover {background-color: var(--gray-100);}
+        /* 标签 */
+        .tag {display: inline-block;padding: 4px 10px;border-radius: 6px;font-size: 12px;font-weight: 500;}
+        .tag-success {background: rgba(0, 180, 42, 0.1);color: var(--success);}
+        .tag-warning {background: rgba(255, 125, 0, 0.1);color: var(--warning);}
+        .tag-danger {background: rgba(245, 63, 63, 0.1);color: var(--danger);}
+        /* 表格 */
+        .table {width: 100%;border-collapse: collapse;}
+        .table th {padding: 12px 16px;background: var(--gray-100);font-weight: 500;text-align: left;font-size: 14px;border-bottom: 1px solid var(--gray-200);}
+        .table td {padding: 16px;border-bottom: 1px solid var(--gray-200);font-size: 14px;}
+        /* 消息提示 */
+        .message-box {position: fixed;top: 80px;right: 24px;padding: 12px 24px;border-radius: 8px;color: white;font-size: 14px;z-index: 99999;animation: slideIn 0.3s ease;max-width: 300px;}
+        .message-success {background: var(--success);}
+        .message-error {background: var(--danger);}
+        @keyframes slideIn {from {transform: translateX(100%);opacity: 0;} to {transform: translateX(0);opacity: 1;}}
+        /* 弹窗样式 */
+        .modal-overlay {position: fixed;top: 0;left: 0;right: 0;bottom: 0;background: rgba(0,0,0,0.5);display: none;justify-content: center;align-items: center;z-index: 9999;}
+        .modal-overlay.show {display: flex;}
+        .modal {background: white;border-radius: 16px;padding: 0;width: 440px;max-width: 90vw;animation: scaleIn 0.3s ease;}
+        @keyframes scaleIn {
+            from {opacity: 0;transform: scale(0.95);}
+            to {opacity: 1;transform: scale(1);}
+        }
+        .modal-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;}
+        .modal-title {font-size: 16px;font-weight: 600;color: var(--gray-900);}
+        .modal-close {background: none;border: none;font-size: 24px;cursor: pointer;color: var(--gray-600);padding: 4px;}
+        .modal-close:hover {color: var(--gray-900);}
+        .modal-body {padding: 24px;}
+        .modal-footer {padding: 16px 24px;border-top: 1px solid var(--gray-200);display: flex;justify-content: flex-end;gap: 12px;}
+        /* 表单样式补充 */
+        .form-group {margin-bottom: 20px;}
+        .form-label {display: block;margin-bottom: 8px;font-size: 14px;font-weight: 500;color: var(--gray-900);}
+        .form-input {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;transition: all 0.2s;}
+        .form-input:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-input:disabled {background-color: var(--gray-100);cursor: not-allowed;}
+        .required {color: var(--danger);}
+        
+        /* 确认弹窗 */
+        .confirm-icon {font-size: 64px;text-align: center;margin-bottom: 16px;color: var(--danger);}
+        .confirm-message {text-align: center;font-size: 16px;color: var(--gray-900);margin-bottom: 8px;}
+        .confirm-desc {text-align: center;font-size: 14px;color: var(--gray-600);margin-bottom: 24px;}
+    </style>
+</head>
+<body>
+    <div id="mainPage">
+        <main class="content">
+                <div class="card mb-6" style="margin-bottom: 24px;">
+                    <div class="card-body">
+                        <div style="display: flex;gap: 16px;align-items: center;">
+                            <select style="flex: 1;height: 40px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;">
+                                <option>全部游戏</option>
+                                <option>传奇世界H5</option>
+                                <option>消消乐</option>
+                                <option>三国志</option>
+                            </select>
+                            <select style="flex: 1;height: 40px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;">
+                                <option>全部状态</option>
+                                <option>排队中</option>
+                                <option>改包中</option>
+                                <option>成功</option>
+                                <option>失败</option>
+                            </select>
+                            <button class="btn btn-primary"><i class="fa fa-search"></i> 搜索</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body" style="padding: 0;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>任务ID</th>
+                                    <th>ICON</th>
+                                    <th>游戏名称</th>
+                                    <th>内容</th>
+                                    <th>状态</th>
+                                    <th>创建人</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#R001</td>
+                                    <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23165DFF' rx='6'/%3E%3Ctext x='20' y='25' font-size='16' fill='white' text-anchor='middle'%3E传%3C/text%3E%3C/svg%3E" style="width:40px;height:40px;border-radius:6px;"></td>
+                                    <td>传奇世界H5</td>
+                                    <td>包名+icon+版本</td>
+                                    <td><span class="tag tag-success">成功</span></td>
+                                    <td>张三</td>
+                                    <td>2026-04-28 10:30</td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-primary" id="btn-download-r001">下载</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#R002</td>
+                                    <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%2300B42A' rx='6'/%3E%3Ctext x='20' y='25' font-size='16' fill='white' text-anchor='middle'%3E消%3C/text%3E%3C/svg%3E" style="width:40px;height:40px;border-radius:6px;"></td>
+                                    <td>消消乐</td>
+                                    <td>版本+V3签名</td>
+                                    <td><span class="tag tag-warning">改包中</span></td>
+                                    <td>李四</td>
+                                    <td>2026-04-28 10:25</td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-default" style="opacity: 0.5;">下载</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#R003</td>
+                                    <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23FF7D00' rx='6'/%3E%3Ctext x='20' y='25' font-size='16' fill='white' text-anchor='middle'%3E三%3C/text%3E%3C/svg%3E" style="width:40px;height:40px;border-radius:6px;"></td>
+                                    <td>三国志</td>
+                                    <td>包名+推广属性</td>
+                                    <td><span class="tag tag-danger">失败</span></td>
+                                    <td>王五</td>
+                                    <td>2026-04-28 10:20</td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-primary" id="btn-retry-r003">重试</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+    </div>
+
+    <script src="导航.js"></script>
+    <script src="common.js"></script>
+    <script>
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Navigation && Navigation.init) {
+                Navigation.init('任务列表');
+            }
+            
+            // 检查登录
+            if (!UI.checkLogin()) return;
+            
+            // 检查改包系统查看权限
+            if (!Permission.hasPageAccess('repkg') || !Permission.hasActionPermission('repkg', 'view')) {
+                UI.showMessage('error', '您没有访问该页面的权限');
+                window.location.href = '登录.html';
+                return;
+            }
+
+            // 初始化UI
+            UI.initUserInfo();
+            UI.initUserDropdown();
+            
+            // 绑定事件
+            // 初始化侧边栏菜单权限
+            initMenuPermissions();
+        });
+
+        // 初始化侧边栏菜单权限
+        function initMenuPermissions() {
+            // 新增游戏菜单
+            const addGameMenu = document.getElementById('menu-add-game');
+            if (addGameMenu && !Permission.hasActionPermission('game', 'add')) {
+                addGameMenu.style.display = 'none';
+            }
+
+            // 新建改包菜单
+            const addRepkgMenu = document.getElementById('menu-add-repkg');
+            if (addRepkgMenu && !Permission.hasActionPermission('repkg', 'add')) {
+                addRepkgMenu.style.display = 'none';
+            }
+
+            // 系统管理菜单组
+            const systemMenuGroup = document.getElementById('menu-group-system');
+            if (systemMenuGroup && Permission.hasPageAccess('system')) {
+                systemMenuGroup.style.display = 'block';
+            }
+        }
+
+    </script>
+</body>
+</html>

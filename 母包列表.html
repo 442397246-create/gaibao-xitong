@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>母包列表 - 在线分包管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="common.css" rel="stylesheet">
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;}
+        body {font-family: "Microsoft Yahei", sans-serif;background-color: #F2F3F5;color: #1D2129;}
+        :root {
+            --primary: #165DFF;--success: #00B42A;--warning: #FF7D00;--danger: #F53F3F;
+            --gray-100: #F2F3F5;--gray-200: #E5E6EB;--gray-300: #C9CDD4;
+            --gray-600: #86909C;--gray-900: #1D2129;
+        }
+        .content {padding: 24px;flex: 1;}
+        /* 卡片 */
+        .card {background: white;border-radius: 12px;box-shadow: 0 2px 8px rgba(0,0,0,0.06);}
+        .card-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;}
+        .card-title {font-size: 16px;font-weight: 600;color: var(--gray-900);}
+        .card-body {padding: 24px;}
+        /* 按钮 */
+        .btn {padding: 8px 24px;border-radius: 8px;border: none;cursor: pointer;font-size: 14px;transition: all 0.3s;display: inline-flex;align-items: center;justify-content: center;gap: 6px;text-decoration: none;}
+        .btn-primary {background-color: var(--primary);color: white;}
+        .btn-primary:hover {background-color: #0D47A1;}
+        .btn-sm {padding: 4px 12px;font-size: 12px;border-radius: 6px;}
+        .btn-default {background-color: white;border: 1px solid var(--gray-200);color: var(--gray-900);}
+        .btn-default:hover {background-color: var(--gray-100);}
+        .btn-danger {background-color: var(--danger);color: white;}
+        .btn-danger:hover {background-color: #D92B2B;}
+        .btn-success {background-color: var(--success);color: white;}
+        .btn-success:hover {background-color: #009A29;}
+        /* 操作按钮组 */
+        .action-btns {display: flex;gap: 6px;}
+        /* 标签 */
+        .tag {display: inline-block;padding: 2px 8px;border-radius: 4px;font-size: 12px;font-weight: 500;}
+        .tag-success {background: rgba(0, 180, 42, 0.1);color: var(--success);}
+        .tag-danger {background: rgba(245, 63, 63, 0.1);color: var(--danger);}
+        /* 表格 */
+        .table {width: 100%;border-collapse: collapse;}
+        .table th {padding: 12px 16px;background: var(--gray-100);font-weight: 500;text-align: left;font-size: 14px;border-bottom: 1px solid var(--gray-200);}
+        .table td {padding: 16px;border-bottom: 1px solid var(--gray-200);font-size: 14px;}
+        /* 消息提示 */
+        .message-box {position: fixed;top: 80px;right: 24px;padding: 12px 24px;border-radius: 8px;color: white;font-size: 14px;z-index: 99999;animation: slideIn 0.3s ease;max-width: 300px;}
+        .message-success {background: var(--success);}
+        .message-error {background: var(--danger);}
+        @keyframes slideIn {from {transform: translateX(100%);opacity: 0;} to {transform: translateX(0);opacity: 1;}}
+        /* 弹窗样式 */
+        .modal-overlay {position: fixed;top: 0;left: 0;right: 0;bottom: 0;background: rgba(0,0,0,0.5);display: none;justify-content: center;align-items: center;z-index: 9999;}
+        .modal-overlay.show {display: flex;}
+        .modal {background: white;border-radius: 16px;padding: 0;width: 420px;max-width: 90vw;max-height: 90vh;overflow: hidden;animation: scaleIn 0.3s ease;display: flex;flex-direction: column;}
+        .modal-wide {width: 900px;}
+        .modal-scroll {overflow-y: auto;}
+        @keyframes scaleIn {
+            from {opacity: 0;transform: scale(0.95);}
+            to {opacity: 1;transform: scale(1);}
+        }
+        .modal-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;}
+        .modal-title {font-size: 16px;font-weight: 600;color: var(--gray-900);}
+        .modal-close {background: none;border: none;font-size: 24px;cursor: pointer;color: var(--gray-600);padding: 4px;}
+        .modal-close:hover {color: var(--gray-900);}
+        .modal-body {padding: 24px;}
+        .modal-footer {padding: 16px 24px;border-top: 1px solid var(--gray-200);display: flex;justify-content: flex-end;gap: 12px;}
+        /* 表单样式补充 */
+        .form-group {margin-bottom: 20px;}
+        .form-label {display: block;margin-bottom: 8px;font-size: 14px;font-weight: 500;color: var(--gray-900);}
+        .form-input {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;transition: all 0.2s;}
+        .form-input:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-input:disabled {background-color: var(--gray-100);cursor: not-allowed;color: var(--gray-600);}
+        .required {color: var(--danger);}
+        /* 编辑弹窗表单行 */
+        .edit-row {display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;}
+        .edit-label {width:185px;flex-shrink:0;text-align:right;padding-top:10px;font-size:13px;color:var(--gray-900);line-height:1.4;word-break:keep-all;}
+        .edit-body {flex:1;min-width:0;}
+        .edit-body .form-input {width:100%;}
+        .edit-divider {display:flex;align-items:center;margin:20px 0 14px;padding-left:185px;}
+        .edit-divider::before {content:'';flex:1;height:1px;background:var(--gray-200);margin-right:10px;}
+        .edit-divider span {font-size:12px;color:var(--gray-600);white-space:nowrap;padding-right:10px;}
+        
+        /* 确认弹窗 */
+        .confirm-icon {font-size: 64px;text-align: center;margin-bottom: 16px;color: var(--danger);}
+        .confirm-message {text-align: center;font-size: 16px;color: var(--gray-900);margin-bottom: 8px;}
+        .confirm-desc {text-align: center;font-size: 14px;color: var(--gray-600);margin-bottom: 24px;}
+        /* 原型说明浮窗 */
+        .proto-fab {position: fixed;top: 260px;right: 20px;width: 64px;height: 64px;border-radius: 14px;background: var(--primary);color: white;border: none;cursor: grab;display: grid;grid-template-columns: 1fr 1fr;place-items: center;font-size: 15px;font-weight: 600;box-shadow: 0 4px 20px rgba(22,93,255,0.4);z-index: 10000;transition: box-shadow 0.25s;user-select: none;line-height: 1;padding: 6px;}
+        .proto-fab:hover {box-shadow: 0 6px 28px rgba(22,93,255,0.5);}
+        .proto-fab:active {cursor: grabbing;}
+        .proto-drawer-overlay {position: fixed;inset: 0;background: rgba(0,0,0,0.4);z-index: 9998;display: none;}
+        .proto-drawer-overlay.show {display: block;}
+        .proto-drawer {position: fixed;top: 0;right: 0;bottom: 0;width: 720px;max-width: 95vw;background: white;z-index: 9999;box-shadow: -4px 0 32px rgba(0,0,0,0.15);transform: translateX(100%);transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);display: flex;flex-direction: column;}
+        .proto-drawer.show {transform: translateX(0);}
+        .proto-drawer-header {display: flex;align-items: center;justify-content: space-between;padding: 22px 28px;border-bottom: 1px solid var(--gray-200);flex-shrink: 0;}
+        .proto-drawer-title {font-size: 20px;font-weight: 600;color: var(--gray-900);display: flex;align-items: center;gap: 12px;}
+        .proto-drawer-title i {color: var(--primary);font-size: 22px;}
+        .proto-drawer-close {width: 40px;height: 40px;border: none;background: var(--gray-100);border-radius: 10px;cursor: pointer;display: flex;align-items: center;justify-content: center;font-size: 20px;color: var(--gray-600);transition: all 0.2s;}
+        .proto-drawer-close:hover {background: var(--gray-200);color: var(--gray-900);}
+        .proto-drawer-body {flex: 1;overflow-y: auto;padding: 28px;}
+        .proto-section {margin-bottom: 28px;}
+        .proto-section:last-child {margin-bottom: 0;}
+        .proto-section-title {font-size: 16px;font-weight: 600;color: var(--gray-900);margin-bottom: 12px;display: flex;align-items: center;gap: 10px;}
+        .proto-section-title:before {content:'';width: 4px;height: 18px;background: var(--primary);border-radius: 2px;flex-shrink: 0;}
+        .proto-flow {display: flex;flex-wrap: wrap;gap: 10px;margin-bottom: 8px;}
+        .proto-step {display: flex;align-items: center;gap: 6px;font-size: 14px;color: var(--gray-600);background: var(--gray-100);padding: 7px 14px;border-radius: 20px;}
+        .proto-step-num {width: 22px;height: 22px;background: var(--primary);color: white;border-radius: 50%;display: flex;align-items: center;justify-content: center;font-size: 12px;font-weight: 600;flex-shrink: 0;}
+        .proto-arrow {color: var(--gray-400);font-size: 14px;display: flex;align-items: center;}
+        .proto-text {font-size: 14px;color: var(--gray-600);line-height: 1.9;}
+        .proto-text strong {color: var(--gray-900);font-weight: 500;}
+        .proto-tag {display: inline-block;padding: 3px 10px;border-radius: 4px;font-size: 12px;margin-right: 4px;margin-bottom: 4px;}
+        .proto-tag.required {background: #FEF2F2;color: var(--danger);font-weight: 500;}
+        .proto-tag.optional {background: #E8F3FF;color: var(--primary);font-weight: 500;}
+        .proto-field {display: flex;justify-content: space-between;align-items: flex-start;padding: 10px 0;border-bottom: 1px solid var(--gray-100);font-size: 14px;}
+        .proto-field:last-child {border-bottom: none;}
+        .proto-field-name {color: var(--gray-900);font-weight: 500;flex-shrink: 0;}
+        .proto-field-desc {color: var(--gray-600);text-align: right;max-width: 58%;}
+    </style>
+</head>
+<body>
+    <div id="mainPage">
+        <main class="content">
+                <div class="card mb-6" style="margin-bottom: 24px;">
+                    <div class="card-body">
+                        <div style="display: flex;gap: 16px;align-items: center;flex-wrap:wrap;">
+                            <div style="display:flex;flex-direction:column;gap:4px;">
+                                <span style="font-size:12px;color:var(--gray-600);font-weight:500;">游戏名称</span>
+                                <div id="searchGameNameContainer"></div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:4px;">
+                                <span style="font-size:12px;color:var(--gray-600);font-weight:500;">包名</span>
+                                <div id="searchPackageNameContainer"></div>
+                            </div>
+                            <button class="btn btn-primary" style="height:36px;margin-top:16px;" onclick="renderGameTable()">搜索</button>
+                            <button class="btn btn-default" style="height:36px;margin-top:16px;" onclick="if(searchGameNameSelect)searchGameNameSelect.clear();if(searchPackageNameSelect)searchPackageNameSelect.clear();">清空</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body" style="padding: 0;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>游戏ID</th>
+                                    <th>ICON</th>
+                                    <th>游戏名称</th>
+                                    <th>平台名称</th>
+                                    <th>企业名称</th>
+                                    <th>包名</th>
+                                    <th>系统类型</th>
+                                    <th>版本号</th>
+                                    <th>签名</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#G001</td>
+                                    <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23165DFF' rx='6'/%3E%3Ctext x='20' y='25' font-size='16' fill='white' text-anchor='middle'%3E传%3C/text%3E%3C/svg%3E" style="width:40px;height:40px;border-radius:6px;"></td>
+                                    <td>传奇世界H5</td>
+                                    <td>抖音平台</td>
+                                    <td>北京字节跳动科技有限公司</td>
+                                    <td>com.game.legend</td>
+                                    <td><span class="tag tag-success" style="background: rgba(22,93,255,0.1);color: var(--primary);">Android</span></td>
+                                    <td>1.2.0</td>
+                                    <td>签名A</td>
+                                    <td>2026-04-20 10:30:15</td>
+                                    <td>
+                                        <div class="action-btns">
+                                            <button class="btn btn-sm btn-success" onclick="downloadGame('G001')"><i class="fa fa-download"></i> 下载</button>
+                                            <button class="btn btn-sm btn-primary" onclick="window.location.href='编辑母包.html?id=G001'">编辑</button>
+                                            <button class="btn btn-sm btn-danger" onclick="openDeleteModal('G001')">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#G002</td>
+                                    <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%2300B42A' rx='6'/%3E%3Ctext x='20' y='25' font-size='16' fill='white' text-anchor='middle'%3E消%3C/text%3E%3C/svg%3E" style="width:40px;height:40px;border-radius:6px;"></td>
+                                    <td>消消乐</td>
+                                    <td>抖音平台</td>
+                                    <td>北京字节跳动科技有限公司</td>
+                                    <td>com.game.match</td>
+                                    <td><span class="tag tag-success" style="background: rgba(22,93,255,0.1);color: var(--primary);">Android</span></td>
+                                    <td>2.1.0</td>
+                                    <td>签名B</td>
+                                    <td>2026-04-21 14:25:30</td>
+                                    <td>
+                                        <div class="action-btns">
+                                            <button class="btn btn-sm btn-success" onclick="downloadGame('G002')"><i class="fa fa-download"></i> 下载</button>
+                                            <button class="btn btn-sm btn-primary" onclick="window.location.href='编辑母包.html?id=G002'">编辑</button>
+                                            <button class="btn btn-sm btn-danger" onclick="openDeleteModal('G002')">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#G003</td>
+                                    <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23FF7D00' rx='6'/%3E%3Ctext x='20' y='25' font-size='16' fill='white' text-anchor='middle'%3E三%3C/text%3E%3C/svg%3E" style="width:40px;height:40px;border-radius:6px;"></td>
+                                    <td>三国志</td>
+                                    <td>快手平台</td>
+                                    <td>北京快手科技有限公司</td>
+                                    <td>com.game.sanguo</td>
+                                    <td><span class="tag tag-success" style="background: rgba(22,93,255,0.1);color: var(--primary);">Android</span></td>
+                                    <td>3.0.1</td>
+                                    <td>签名A</td>
+                                    <td>2026-04-22 09:15:45</td>
+                                    <td>
+                                        <div class="action-btns">
+                                            <button class="btn btn-sm btn-success" onclick="downloadGame('G003')"><i class="fa fa-download"></i> 下载</button>
+                                            <button class="btn btn-sm btn-primary" onclick="window.location.href='编辑母包.html?id=G003'">编辑</button>
+                                            <button class="btn btn-sm btn-danger" onclick="openDeleteModal('G003')">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#G004</td>
+                                    <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23F53F3F' rx='6'/%3E%3Ctext x='20' y='25' font-size='16' fill='white' text-anchor='middle'%3E王%3C/text%3E%3C/svg%3E" style="width:40px;height:40px;border-radius:6px;"></td>
+                                    <td>王者荣耀</td>
+                                    <td>快手平台</td>
+                                    <td>北京快手科技有限公司</td>
+                                    <td>com.game.honor</td>
+                                    <td><span class="tag tag-success" style="background: rgba(22,93,255,0.1);color: var(--primary);">Android</span></td>
+                                    <td>8.2.3</td>
+                                    <td>签名C</td>
+                                    <td>2026-04-23 16:40:20</td>
+                                    <td>
+                                        <div class="action-btns">
+                                            <button class="btn btn-sm btn-success" onclick="downloadGame('G004')"><i class="fa fa-download"></i> 下载</button>
+                                            <button class="btn btn-sm btn-primary" onclick="window.location.href='编辑母包.html?id=G004'">编辑</button>
+                                            <button class="btn btn-sm btn-danger" onclick="openDeleteModal('G004')">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+    </div>
+
+    <!-- 编辑弹窗 -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <div class="modal-title">更新游戏信息</div>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body modal-scroll" style="padding: 24px 32px;">
+                <!-- ─── 基础信息（只读）─── -->
+                <div class="edit-divider"><span>企业信息（只读）</span></div>
+                <div class="edit-row">
+                    <div class="edit-label">所属企业Id</div>
+                    <div class="edit-body"><input type="text" id="edit-companyId" class="form-input" disabled></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">所属企业名称</div>
+                    <div class="edit-body"><input type="text" id="edit-companyName" class="form-input" disabled></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">游戏包名</div>
+                    <div class="edit-body"><input type="text" id="edit-packageName" class="form-input" disabled></div>
+                </div>
+                <!-- ─── 基础信息（可编辑）─── -->
+                <div class="edit-divider"><span>基础信息</span></div>
+                <div class="edit-row">
+                    <div class="edit-label">游戏名称 <span class="required">*</span></div>
+                    <div class="edit-body"><input type="text" id="edit-gameName" class="form-input" placeholder="请输入游戏名称"></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">游戏屏幕方向</div>
+                    <div class="edit-body">
+                        <select id="edit-gcreenOrientation" class="form-input">
+                            <option value="横屏">横屏</option>
+                            <option value="竖屏">竖屏</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">游戏聚合类型</div>
+                    <div class="edit-body"><input type="text" id="edit-aggType" class="form-input" value="龙翔SDK" disabled></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">系统类型</div>
+                    <div class="edit-body"><input type="text" id="edit-systemType" class="form-input" disabled></div>
+                </div>
+                <!-- ─── 游戏参数 ─── -->
+                <div class="edit-divider"><span>游戏参数</span></div>
+                <div class="edit-row">
+                    <div class="edit-label">游戏access_key参数</div>
+                    <div class="edit-body"><input type="text" id="edit-accessKey" class="form-input" placeholder="请输入access_key参数"></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">游戏domain_url参数</div>
+                    <div class="edit-body"><input type="text" id="edit-domainUrl" class="form-input" placeholder="请输入domain_url参数"></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">游戏game_channel_id参数</div>
+                    <div class="edit-body"><input type="text" id="edit-gameChannelId" class="form-input" placeholder="请输入game_channel_id参数"></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">游戏gameappid参数</div>
+                    <div class="edit-body"><input type="text" id="edit-gameAppId" class="form-input" placeholder="请输入gameappid参数"></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">游戏gameid参数</div>
+                    <div class="edit-body"><input type="text" id="edit-gameIdParam" class="form-input" placeholder="请输入gameid参数"></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">游戏gamename参数</div>
+                    <div class="edit-body"><input type="text" id="edit-gameNameParam" class="form-input" placeholder="请输入gamename参数"></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">游戏gameurl参数</div>
+                    <div class="edit-body"><input type="text" id="edit-gameUrl" class="form-input" placeholder="请输入gameurl参数"></div>
+                </div>
+                <!-- ─── 参数配置 ─── -->
+                <div class="edit-divider"><span>参数配置</span></div>
+                <div class="edit-row">
+                    <div class="edit-label">是否修改游戏参数</div>
+                    <div class="edit-body">
+                        <select id="edit-isModifyGameParam" class="form-input" onchange="toggleEditGameParams()">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="edit-gameParamsBlock" style="display:none;">
+                    <div class="edit-row">
+                        <div class="edit-label">游戏配置文件位置类型</div>
+                        <div class="edit-body">
+                            <select id="edit-configFileLocationType" class="form-input">
+                                <option value="AndroidManifest.xml">AndroidManifest.xml</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="edit-row">
+                        <div class="edit-label">游戏配置参数的文件名</div>
+                        <div class="edit-body"><input type="text" id="edit-configFileName" class="form-input" value="AndroidManifest.xml"></div>
+                    </div>
+                    <div class="edit-row">
+                        <div class="edit-label">游戏配置文件的内容类型</div>
+                        <div class="edit-body">
+                            <select id="edit-configFileContentType" class="form-input">
+                                <option value="XML">XML</option>
+                                <option value="JSON">JSON</option>
+                                <option value="YAML">YAML</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="edit-row">
+                        <div class="edit-label">游戏配置参数Key和Value_Json对象</div>
+                        <div class="edit-body">
+                            <textarea id="edit-parametersJsonFormat" class="form-input" style="min-height:80px;font-family:Consolas,Monaco,monospace;" placeholder='{"access_key":"","domain_url":"",...}'></textarea>
+                        </div>
+                    </div>
+                </div>
+                <!-- ─── 游戏配置 ─── -->
+                <div class="edit-divider"><span>游戏配置</span></div>
+                <div class="edit-row">
+                    <div class="edit-label">是否需要修改游戏Logo</div>
+                    <div class="edit-body">
+                        <select id="edit-isModifyGameLogo" class="form-input" onchange="toggleEditLogo()">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="edit-row" id="edit-logoRow" style="display:none;">
+                    <div class="edit-label">游戏Logo的保存路径</div>
+                    <div class="edit-body"><input type="text" id="edit-logoPath" class="form-input" placeholder="如: /static/logo/game_logo.png"></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">是否设置游戏主界面Activity信息</div>
+                    <div class="edit-body">
+                        <select id="edit-isSetGameMainClass" class="form-input" onchange="toggleEditGameMainClass()">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="edit-row" id="edit-gameMainClassRow" style="display:none;">
+                    <div class="edit-label">游戏主界面Activity信息</div>
+                    <div class="edit-body"><input type="text" id="edit-gameMainClassI" class="form-input" placeholder="如: com.game.MainActivity"></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">是否修改targetSdkVersion版本</div>
+                    <div class="edit-body">
+                        <select id="edit-isModifyTargetSdkVersion" class="form-input" onchange="toggleEditTargetSdk()">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="edit-row" id="edit-targetSdkRow" style="display:none;">
+                    <div class="edit-label">targetSdkVersion版本</div>
+                    <div class="edit-body"><input type="text" id="edit-targetSdkVersionValue" class="form-input" placeholder="如: 33"></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">玩咖厂商</div>
+                    <div class="edit-body">
+                        <select id="edit-isWankaVendor" class="form-input">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">关闭盛趣云游戏</div>
+                    <div class="edit-body">
+                        <select id="edit-isCloseSqCloudGame" class="form-input">
+                            <option value="false">否（开启云游戏）</option>
+                            <option value="true">是（关闭云游戏）</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">Smali处理模式</div>
+                    <div class="edit-body">
+                        <select id="edit-smaliResourcesMergeMode" class="form-input">
+                            <option value="CHANNEL_PRIORITY">渠道资源优先</option>
+                            <option value="Games_PRIORITY">游戏资源优先</option>
+                            <option value="AUTO_MERGER">自动合并</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">Res处理模式</div>
+                    <div class="edit-body">
+                        <select id="edit-resResourcesMergeMode" class="form-input">
+                            <option value="CHANNEL_PRIORITY">渠道资源优先</option>
+                            <option value="Games_PRIORITY">游戏资源优先</option>
+                            <option value="AUTO_MERGER">自动合并</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">如需更新请填写游戏FTP的全路径</div>
+                    <div class="edit-body"><input type="text" id="edit-ftpFullPath" class="form-input" placeholder="请输入FTP全路径"></div>
+                </div>
+                <!-- ─── 操作记录（只读）─── -->
+                <div class="edit-divider"><span>操作记录</span></div>
+                <div class="edit-row">
+                    <div class="edit-label">最后操作人员</div>
+                    <div class="edit-body"><input type="text" id="edit-operator" class="form-input" disabled></div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-label">最后的更新时间</div>
+                    <div class="edit-body"><input type="text" id="edit-updateTime" class="form-input" disabled></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeEditModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveEdit()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">删除游戏</div>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon"><i class="fa fa-exclamation-triangle"></i></div>
+                <div class="confirm-message">确定要删除该游戏吗？</div>
+                <div class="confirm-desc">删除后无法恢复，请谨慎操作</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeDeleteModal()">取消</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="导航.js"></script>
+    <script src="common.js"></script>
+    <script>
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Navigation && Navigation.init) {
+                Navigation.init('母包列表');
+            }
+            
+            // 检查登录
+            if (!UI.checkLogin()) return;
+            
+            // 检查游戏管理查看权限
+            if (!Permission.hasPageAccess('game') || !Permission.hasActionPermission('game', 'view')) {
+                UI.showMessage('error', '您没有访问该页面的权限');
+                window.location.href = '登录.html';
+                return;
+            }
+
+            // 初始化UI
+            UI.initUserInfo();
+            UI.initUserDropdown();
+
+            // 将硬编码演示数据同步到 localStorage
+            initGameDataStorage();
+            initSearchSelect();
+        });
+
+        // 将 gameData 同步到 localStorage（带版本控制）
+        function initGameDataStorage() {
+            const GAME_DATA_VERSION = 2;
+            const storedVersion = parseInt(localStorage.getItem('repkg_games_version') || '0');
+            if (!localStorage.getItem('repkg_games') || storedVersion < GAME_DATA_VERSION) {
+                // 将 gameData 对象转为数组存入 localStorage
+                const gamesArray = Object.values(gameData);
+                localStorage.setItem('repkg_games', JSON.stringify(gamesArray));
+                localStorage.setItem('repkg_games_version', GAME_DATA_VERSION);
+            }
+        }
+
+        // 模拟游戏数据
+        const gameData = {
+            'G001': { id: 'G001', name: '传奇世界H5', packageName: 'com.game.legend', versionName: '1.2.0', systemType: 'Android', signature: '签名A', createTime: '2026-04-20 10:30:15',
+                companyId: '10001', companyName: '北京字节跳动科技有限公司',
+                aggType: '龙翔SDK', gcreenOrientation: '横屏',
+                accessKey: 'JTgmfBoiAzYLvGMWfih', domainUrl: 'http://t.longxiangportal6.com',
+                gameChannelId: 'yiqu_0', gameAppId: 'C0ED525888DF8BD4', gameIdParam: '633',
+                gameNameParam: '风云沙城(安卓版)', gameUrl: 'http://t.longxiangportal6.com',
+                ftpStatus: '同步完成', ftpPath: '/字节跳动/母包/传奇世界H5_1.2.0.apk',
+                clusterId: '10001', operator: '邱伟', updateTime: '2025-06-04 12:07:35',
+                isModifyGameParam: 'false', configFileLocationType: 'AndroidManifest.xml', configFileName: 'AndroidManifest.xml',
+                configFileContentType: 'XML', parametersJsonFormat: '',
+                isModifyGameLogo: 'false', logoPath: '', isSetGameMainClass: 'false', gameMainClassI: '',
+                isModifyTargetSdkVersion: 'false', targetSdkVersionValue: '',
+                isWankaVendor: 'false', isCloseSqCloudGame: 'false',
+                smaliResourcesMergeMode: 'CHANNEL_PRIORITY', resResourcesMergeMode: 'CHANNEL_PRIORITY', ftpFullPath: ''
+            },
+            'G002': { id: 'G002', name: '消消乐', packageName: 'com.game.match', versionName: '2.1.0', systemType: 'Android', signature: '签名B', createTime: '2026-04-21 14:25:30',
+                companyId: '10002', companyName: '泉州科技有限公司',
+                aggType: '单款', gcreenOrientation: '竖屏',
+                accessKey: '', domainUrl: '', gameChannelId: '', gameAppId: '', gameIdParam: '',
+                gameNameParam: '', gameUrl: '', ftpStatus: '同步完成', ftpPath: '/泉州/母包/消消乐_2.1.0.apk',
+                clusterId: '10002', operator: '邱伟', updateTime: '2025-05-20 09:00:00',
+                isModifyGameParam: 'false', configFileLocationType: 'AndroidManifest.xml', configFileName: 'AndroidManifest.xml',
+                configFileContentType: 'XML', parametersJsonFormat: '',
+                isModifyGameLogo: 'false', logoPath: '', isSetGameMainClass: 'false', gameMainClassI: '',
+                isModifyTargetSdkVersion: 'false', targetSdkVersionValue: '',
+                isWankaVendor: 'false', isCloseSqCloudGame: 'false',
+                smaliResourcesMergeMode: 'CHANNEL_PRIORITY', resResourcesMergeMode: 'CHANNEL_PRIORITY', ftpFullPath: ''
+            },
+            'G003': { id: 'G003', name: '三国志', packageName: 'com.game.sanguo', versionName: '3.0.1', systemType: 'Android', signature: '签名A', createTime: '2026-04-22 09:15:45',
+                companyId: '10003', companyName: '广州游戏科技有限公司',
+                aggType: '单款', gcreenOrientation: '横屏',
+                accessKey: '', domainUrl: '', gameChannelId: '', gameAppId: '', gameIdParam: '',
+                gameNameParam: '', gameUrl: '', ftpStatus: '同步完成', ftpPath: '/广州/母包/三国志_3.0.1.apk',
+                clusterId: '10003', operator: '张三', updateTime: '2025-06-01 15:00:00',
+                isModifyGameParam: 'false', configFileLocationType: 'AndroidManifest.xml', configFileName: 'AndroidManifest.xml',
+                configFileContentType: 'XML', parametersJsonFormat: '',
+                isModifyGameLogo: 'false', logoPath: '', isSetGameMainClass: 'false', gameMainClassI: '',
+                isModifyTargetSdkVersion: 'false', targetSdkVersionValue: '',
+                isWankaVendor: 'false', isCloseSqCloudGame: 'false',
+                smaliResourcesMergeMode: 'CHANNEL_PRIORITY', resResourcesMergeMode: 'CHANNEL_PRIORITY', ftpFullPath: ''
+            },
+            'G004': { id: 'G004', name: '王者荣耀', packageName: 'com.game.honor', versionName: '8.2.3', systemType: 'Android', signature: '签名C', createTime: '2026-04-23 16:40:20',
+                companyId: '10004', companyName: '深圳网络技术有限公司',
+                aggType: '龙翔SDK', gcreenOrientation: '横屏',
+                accessKey: '', domainUrl: '', gameChannelId: '', gameAppId: '', gameIdParam: '',
+                gameNameParam: '', gameUrl: '', ftpStatus: '同步完成', ftpPath: '/深圳/母包/王者荣耀_8.2.3.apk',
+                clusterId: '10004', operator: '李四', updateTime: '2025-05-15 18:30:00',
+                isModifyGameParam: 'false', configFileLocationType: 'AndroidManifest.xml', configFileName: 'AndroidManifest.xml',
+                configFileContentType: 'XML', parametersJsonFormat: '',
+                isModifyGameLogo: 'false', logoPath: '', isSetGameMainClass: 'false', gameMainClassI: '',
+                isModifyTargetSdkVersion: 'false', targetSdkVersionValue: '',
+                isWankaVendor: 'false', isCloseSqCloudGame: 'false',
+                smaliResourcesMergeMode: 'CHANNEL_PRIORITY', resResourcesMergeMode: 'CHANNEL_PRIORITY', ftpFullPath: ''
+            }
+        };
+
+        let currentEditGameId = null;
+        let currentDeleteGameId = null;
+        let searchGameNameSelect, searchPackageNameSelect;
+
+        function initSearchSelect() {
+            const games = JSON.parse(localStorage.getItem('repkg_games') || '[]');
+            searchGameNameSelect = new SearchSelect('searchGameNameContainer', {
+                placeholder: '搜索游戏名称...',
+                data: [...new Set(games.map(g => (g.name || g.gameName)).filter(Boolean))].map(v => ({ value: v, label: v })),
+                onChange: () => renderGameTable(),
+                width: '200px'
+            });
+            searchPackageNameSelect = new SearchSelect('searchPackageNameContainer', {
+                placeholder: '搜索包名...',
+                data: [...new Set(games.map(g => g.packageName).filter(Boolean))].map(v => ({ value: v, label: v })),
+                onChange: () => renderGameTable(),
+                width: '200px'
+            });
+        }
+
+        function renderGameTable() {
+            const searchGameName = searchGameNameSelect ? searchGameNameSelect.getValue().toLowerCase() : '';
+            const searchPackageName = searchPackageNameSelect ? searchPackageNameSelect.getValue().toLowerCase() : '';
+            const games = JSON.parse(localStorage.getItem('repkg_games') || '[]');
+            const tbody = document.querySelector('.table tbody');
+            tbody.innerHTML = '';
+            games.forEach(game => {
+                const gameName = game.name || game.gameName || '';
+                const pkgName = game.packageName || '';
+                if (searchGameName && !gameName.toLowerCase().includes(searchGameName)) return;
+                if (searchPackageName && !pkgName.toLowerCase().includes(searchPackageName)) return;
+                const displayName = gameName || pkgName;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>#${game.id}</td>
+                    <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23165DFF' rx='6'/%3E%3Ctext x='20' y='25' font-size='16' fill='white' text-anchor='middle'%3E${displayName.charAt(0)}%3C/text%3E%3C/svg%3E" style="width:40px;height:40px;border-radius:6px;"></td>
+                    <td>${displayName}</td>
+                    <td>${game.platformName || '抖音平台'}</td>
+                    <td>${game.companyName || '北京字节跳动科技有限公司'}</td>
+                    <td>${pkgName}</td>
+                    <td><span class="tag tag-success" style="background: rgba(22,93,255,0.1);color: var(--primary);">${game.systemType || 'Android'}</span></td>
+                    <td>${game.versionName || '-'}</td>
+                    <td>${game.signature || '-'}</td>
+                    <td>${game.createTime || game.createdAt || '-'}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn btn-sm btn-success" onclick="downloadGame('${game.id}')"><i class="fa fa-download"></i> 下载</button>
+                            <button class="btn btn-sm btn-primary" onclick="window.location.href='编辑母包.html?id=${game.id}'">编辑</button>
+                            <button class="btn btn-sm btn-danger" onclick="openDeleteModal('${game.id}')">删除</button>
+                        </div>
+                    </td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 下载游戏母包
+        function downloadGame(gameId) {
+            const games = JSON.parse(localStorage.getItem('repkg_games') || '[]');
+            const game = games.find(g => String(g.id) === String(gameId));
+            if (!game) { UI.showMessage('error', '游戏不存在'); return; }
+            const gameName = game.name || game.gameName || game.packageName;
+            UI.showMessage('success', `正在下载 ${gameName}`);
+        }
+
+        // 打开编辑弹窗
+        function openEditModal(gameId) {
+            const games = JSON.parse(localStorage.getItem('repkg_games') || '[]');
+            const game = games.find(g => String(g.id) === String(gameId));
+            if (!game) return;
+            currentEditGameId = gameId;
+            
+            // 只读字段
+            setVal('edit-companyId', game.companyId);
+            setVal('edit-companyName', game.companyName);
+            setVal('edit-packageName', game.packageName);
+            setVal('edit-aggType', game.aggType || '龙翔SDK');
+            setVal('edit-systemType', game.systemType);
+            setVal('edit-accessKey', game.accessKey);
+            setVal('edit-domainUrl', game.domainUrl);
+            setVal('edit-gameChannelId', game.gameChannelId);
+            setVal('edit-gameAppId', game.gameAppId);
+            setVal('edit-gameIdParam', game.gameIdParam);
+            setVal('edit-gameNameParam', game.gameNameParam);
+            setVal('edit-gameUrl', game.gameUrl);
+            setVal('edit-operator', game.operator);
+            setVal('edit-updateTime', game.updateTime);
+            
+            // 可编辑字段
+            setVal('edit-gameName', game.name || game.gameName);
+            setVal('edit-gcreenOrientation', game.gcreenOrientation);
+            setVal('edit-isModifyGameParam', game.isModifyGameParam);
+            setVal('edit-configFileLocationType', game.configFileLocationType);
+            setVal('edit-configFileName', game.configFileName);
+            setVal('edit-configFileContentType', game.configFileContentType);
+            setVal('edit-parametersJsonFormat', game.parametersJsonFormat);
+            setVal('edit-isModifyGameLogo', game.isModifyGameLogo);
+            setVal('edit-logoPath', game.logoPath);
+            setVal('edit-isSetGameMainClass', game.isSetGameMainClass);
+            setVal('edit-gameMainClassI', game.gameMainClassI);
+            setVal('edit-isModifyTargetSdkVersion', game.isModifyTargetSdkVersion);
+            setVal('edit-targetSdkVersionValue', game.targetSdkVersionValue);
+            setVal('edit-isWankaVendor', game.isWankaVendor);
+            setVal('edit-isCloseSqCloudGame', game.isCloseSqCloudGame);
+            setVal('edit-smaliResourcesMergeMode', game.smaliResourcesMergeMode);
+            setVal('edit-resResourcesMergeMode', game.resResourcesMergeMode);
+            setVal('edit-ftpFullPath', game.ftpFullPath);
+            
+            // 联动展开
+            toggleEditGameParams();
+            toggleEditLogo();
+            toggleEditGameMainClass();
+            toggleEditTargetSdk();
+            applyEditSystemVisibility(game.systemType);
+            
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function setVal(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.value = val || '';
+        }
+
+        // 根据系统类型显隐编辑弹窗字段
+        function applyEditSystemVisibility(systemType) {
+            var androidFields = [
+                'edit-gcreenOrientation', 'edit-isModifyGameParam', 'edit-configFileLocationType',
+                'edit-configFileName', 'edit-configFileContentType', 'edit-parametersJsonFormat',
+                'edit-isSetGameMainClass', 'edit-isModifyTargetSdkVersion',
+                'edit-isWankaVendor', 'edit-isCloseSqCloudGame',
+                'edit-smaliResourcesMergeMode', 'edit-resResourcesMergeMode'
+            ];
+            var isAndroid = systemType === 'Android';
+            androidFields.forEach(function(id) {
+                var row = document.getElementById(id);
+                if (!row) return;
+                var parent = row.closest('.edit-row') || row;
+                parent.style.display = isAndroid ? '' : 'none';
+            });
+            // FTP路径仅iOS显示
+            var ftpRow = document.getElementById('edit-ftpFullPath');
+            if (ftpRow) {
+                var p = ftpRow.closest('.edit-row');
+                if (p) p.style.display = systemType === 'iOS' ? '' : 'none';
+            }
+            // 游戏屏幕方向仅Android/iOS显示
+            var screenRow = document.getElementById('edit-gcreenOrientation');
+            if (screenRow) {
+                var p = screenRow.closest('.edit-row');
+                if (p) p.style.display = (systemType === 'Windows') ? 'none' : '';
+            }
+        }
+
+        // 关闭编辑弹窗
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+            currentEditGameId = null;
+        }
+
+        // 保存编辑
+        function saveEdit() {
+            const gameName = document.getElementById('edit-gameName').value.trim();
+            if (!gameName) { UI.showMessage('error', '请输入游戏名称'); return; }
+            
+            const games = JSON.parse(localStorage.getItem('repkg_games') || '[]');
+            const idx = games.findIndex(g => String(g.id) === String(currentEditGameId));
+            if (idx < 0) return;
+            
+            const game = games[idx];
+            game.name = gameName;
+            game.gcreenOrientation = document.getElementById('edit-gcreenOrientation').value;
+            game.accessKey = document.getElementById('edit-accessKey').value;
+            game.domainUrl = document.getElementById('edit-domainUrl').value;
+            game.gameChannelId = document.getElementById('edit-gameChannelId').value;
+            game.gameAppId = document.getElementById('edit-gameAppId').value;
+            game.gameIdParam = document.getElementById('edit-gameIdParam').value;
+            game.gameNameParam = document.getElementById('edit-gameNameParam').value;
+            game.gameUrl = document.getElementById('edit-gameUrl').value;
+            game.isModifyGameParam = document.getElementById('edit-isModifyGameParam').value;
+            game.configFileLocationType = document.getElementById('edit-configFileLocationType').value;
+            game.configFileName = document.getElementById('edit-configFileName').value;
+            game.configFileContentType = document.getElementById('edit-configFileContentType').value;
+            game.parametersJsonFormat = document.getElementById('edit-parametersJsonFormat').value;
+            game.isModifyGameLogo = document.getElementById('edit-isModifyGameLogo').value;
+            game.logoPath = document.getElementById('edit-logoPath').value;
+            game.isSetGameMainClass = document.getElementById('edit-isSetGameMainClass').value;
+            game.gameMainClassI = document.getElementById('edit-gameMainClassI').value;
+            game.isModifyTargetSdkVersion = document.getElementById('edit-isModifyTargetSdkVersion').value;
+            game.targetSdkVersionValue = document.getElementById('edit-targetSdkVersionValue').value;
+            game.isWankaVendor = document.getElementById('edit-isWankaVendor').value;
+            game.isCloseSqCloudGame = document.getElementById('edit-isCloseSqCloudGame').value;
+            game.smaliResourcesMergeMode = document.getElementById('edit-smaliResourcesMergeMode').value;
+            game.resResourcesMergeMode = document.getElementById('edit-resResourcesMergeMode').value;
+            game.ftpFullPath = document.getElementById('edit-ftpFullPath').value;
+            
+            localStorage.setItem('repkg_games', JSON.stringify(games));
+            renderGameTable();
+            closeEditModal();
+            UI.showMessage('success', '游戏信息更新成功');
+        }
+
+        // 编辑弹窗联动展开
+        function toggleEditGameParams() {
+            const v = document.getElementById('edit-isModifyGameParam').value === 'true';
+            document.getElementById('edit-gameParamsBlock').style.display = v ? '' : 'none';
+        }
+        function toggleEditLogo() {
+            const v = document.getElementById('edit-isModifyGameLogo').value === 'true';
+            document.getElementById('edit-logoRow').style.display = v ? '' : 'none';
+        }
+        function toggleEditGameMainClass() {
+            const v = document.getElementById('edit-isSetGameMainClass').value === 'true';
+            document.getElementById('edit-gameMainClassRow').style.display = v ? '' : 'none';
+        }
+        function toggleEditTargetSdk() {
+            const v = document.getElementById('edit-isModifyTargetSdkVersion').value === 'true';
+            document.getElementById('edit-targetSdkRow').style.display = v ? '' : 'none';
+        }
+
+        // 打开删除弹窗
+        function openDeleteModal(gameId) {
+            currentDeleteGameId = gameId;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        // 关闭删除弹窗
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+            currentDeleteGameId = null;
+        }
+
+        // 确认删除
+        function confirmDelete() {
+            const games = JSON.parse(localStorage.getItem('repkg_games') || '[]');
+            const filtered = games.filter(g => String(g.id) !== String(currentDeleteGameId));
+            localStorage.setItem('repkg_games', JSON.stringify(filtered));
+            
+            UI.showMessage('success', '游戏删除成功');
+            closeDeleteModal();
+            renderGameTable();
+        }
+
+        // ===== 原型说明浮窗 =====
+        var fabIsMouseDown = false, fabWasDragged = false, fabStartX, fabStartY;
+        document.addEventListener('DOMContentLoaded', function() {
+            var fab = document.getElementById('protoFab');
+            fab.addEventListener('mousedown', function(e) {
+                if (e.button !== 0) return;
+                fabIsMouseDown = true; fabWasDragged = false;
+                fabStartX = e.clientX; fabStartY = e.clientY;
+                var rect = fab.getBoundingClientRect();
+                fab.style.right = 'auto'; fab.style.top = rect.top + 'px'; fab.style.left = rect.left + 'px';
+                fab.style.transition = 'none';
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', function(e) {
+                if (!fabIsMouseDown) return;
+                var dx = e.clientX - fabStartX, dy = e.clientY - fabStartY;
+                if (Math.abs(dx) > 2 || Math.abs(dy) > 2) fabWasDragged = true;
+                fab.style.right = 'auto';
+                fab.style.left = Math.max(0, Math.min(window.innerWidth - fab.offsetWidth, fab.offsetLeft + dx)) + 'px';
+                fab.style.top = Math.max(0, Math.min(window.innerHeight - fab.offsetHeight, fab.offsetTop + dy)) + 'px';
+                fabStartX = e.clientX; fabStartY = e.clientY;
+            });
+            document.addEventListener('mouseup', function() {
+                if (!fabIsMouseDown) return;
+                fabIsMouseDown = false;
+                fab.style.transition = '';
+            });
+            fab.addEventListener('click', function(e) {
+                if (!fabWasDragged) toggleProtoDrawer();
+            });
+        });
+        function toggleProtoDrawer() {
+            document.getElementById('protoDrawer').classList.toggle('show');
+            document.getElementById('protoDrawerOverlay').classList.toggle('show');
+        }
+        function closeProtoDrawer() {
+            document.getElementById('protoDrawer').classList.remove('show');
+            document.getElementById('protoDrawerOverlay').classList.remove('show');
+        }
+    </script>
+    <button class="proto-fab" id="protoFab" title="原型说明（可拖动）"><span>原</span><span>型</span><span>说</span><span>明</span></button>
+    <div class="proto-drawer-overlay" id="protoDrawerOverlay" onclick="closeProtoDrawer()"></div>
+    <div class="proto-drawer" id="protoDrawer">
+        <div class="proto-drawer-header">
+            <div class="proto-drawer-title"><i class="fa fa-info-circle"></i> 原型说明 - 母包列表</div>
+            <button class="proto-drawer-close" onclick="closeProtoDrawer()"><i class="fa fa-times"></i></button>
+        </div>
+        <div class="proto-drawer-body">
+            <div class="proto-section"><div class="proto-section-title">页面用途</div><p class="proto-text">管理系统中所有游戏母包。<strong>列表展示、搜索筛选、编辑更新、删除管理</strong>。</p></div>
+            <div class="proto-section"><div class="proto-section-title">主要功能</div><p class="proto-text">1. <strong>搜索筛选</strong>：按游戏名称、包名搜索，按系统类型筛选<br>2. <strong>编辑游戏</strong>：点击编辑打开弹窗，修改游戏参数和配置<br>3. <strong>操作记录</strong>：编辑弹窗底部展示操作人员和更新时间<br>4. <strong>新增游戏</strong>：顶部按钮跳转新增页面</p></div>
+            <div class="proto-section"><div class="proto-section-title">编辑弹窗说明</div><p class="proto-text"><strong>企业信息：</strong>只读，显示所属企业ID和名称<br><strong>游戏参数：</strong>解析包体后动态渲染为多字段（access_key、domain_url等）<br><strong>条件展开：</strong>修改参数/Logo/Activity/SDK选"是"后出现对应配置<br><strong>数据存储：</strong>保存后更新 localStorage（repkg_games）</p></div>
+        </div>
+    </div>
+</body>
+</html>

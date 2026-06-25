@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>岗位管理 - 在线分包管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;}
+        body {font-family: "Microsoft Yahei", sans-serif;background-color: #F2F3F5;color: #1D2129;}
+        :root {
+            --primary: #165DFF;--success: #00B42A;--warning: #FF7D00;--danger: #F53F3F;
+            --gray-100: #F2F3F5;--gray-200: #E5E6EB;--gray-300: #C9CDD4;
+            --gray-600: #86909C;--gray-900: #1D2129;
+        }
+        .content {padding: 24px;flex: 1;}
+        /* 卡片 */
+        .card {background: white;border-radius: 12px;box-shadow: 0 2px 8px rgba(0,0,0,0.06);}
+        .card-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;}
+        .card-title {font-size: 16px;font-weight: 600;color: var(--gray-900);}
+        .card-body {padding: 24px;}
+        /* 按钮 */
+        .btn {padding: 8px 24px;border-radius: 8px;border: none;cursor: pointer;font-size: 14px;transition: all 0.3s;display: inline-flex;align-items: center;justify-content: center;gap: 6px;text-decoration: none;}
+        .btn-primary {background-color: var(--primary);color: white;}
+        .btn-primary:hover {background-color: #0D47A1;}
+        .btn-sm {padding: 4px 12px;font-size: 12px;border-radius: 6px;}
+        .btn-default {background-color: white;border: 1px solid var(--gray-200);color: var(--gray-900);}
+        .btn-default:hover {background-color: var(--gray-100);}
+        .btn-danger {background-color: var(--danger);color: white;}
+        .btn-danger:hover {background-color: #D92B2B;}
+        /* 表格 */
+        .table {width: 100%;border-collapse: collapse;}
+        .table th {padding: 12px 16px;background: var(--gray-100);font-weight: 500;text-align: left;font-size: 14px;border-bottom: 1px solid var(--gray-200);}
+        .table td {padding: 16px;border-bottom: 1px solid var(--gray-200);font-size: 14px;}
+        /* 标签 */
+        .tag {display: inline-block;padding: 4px 10px;border-radius: 6px;font-size: 12px;font-weight: 500;}
+        .tag-success {background: rgba(0, 180, 42, 0.1);color: var(--success);}
+        .tag-warning {background: rgba(255, 125, 0, 0.1);color: var(--warning);}
+        /* 消息提示 */
+        .message-box {position: fixed;top: 80px;right: 24px;padding: 12px 24px;border-radius: 8px;color: white;font-size: 14px;z-index: 99999;animation: slideIn 0.3s ease;max-width: 300px;}
+        .message-success {background: var(--success);}
+        .message-error {background: var(--danger);}
+        @keyframes slideIn {from {transform: translateX(100%);opacity: 0;} to {transform: translateX(0);opacity: 1;}}
+        @keyframes slideOut {from {transform: translateX(0);opacity: 1;} to {transform: translateX(100%);opacity: 0;}}
+        /* 弹窗样式 */
+        .modal-overlay {position: fixed;top: 0;left: 0;right: 0;bottom: 0;background: rgba(0,0,0,0.5);display: none;justify-content: center;align-items: center;z-index: 9999;}
+        .modal-overlay.show {display: flex;}
+        .modal {background: white;border-radius: 16px;padding: 0;width: 600px;max-width: 90vw;max-height: 90vh;overflow: hidden;animation: scaleIn 0.3s ease;display: flex;flex-direction: column;}
+        @keyframes scaleIn {
+            from {opacity: 0;transform: scale(0.95);}
+            to {opacity: 1;transform: scale(1);}
+        }
+        .modal-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;flex-shrink: 0;}
+        .modal-title {font-size: 18px;font-weight: 600;color: var(--gray-900);}
+        .modal-close {background: none;border: none;font-size: 24px;cursor: pointer;color: var(--gray-600);padding: 4px;}
+        .modal-close:hover {color: var(--gray-900);}
+        .modal-body {padding: 24px;overflow-y: auto;flex: 1;}
+        .modal-footer {padding: 16px 24px;border-top: 1px solid var(--gray-200);display: flex;justify-content: flex-end;gap: 12px;flex-shrink: 0;}
+        /* 表单样式 */
+        .form-group {margin-bottom: 20px;}
+        .form-label {display: block;margin-bottom: 8px;font-size: 14px;font-weight: 500;color: var(--gray-900);}
+        .form-label .required {color: var(--danger);}
+        .form-input {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;transition: all 0.2s;}
+        .form-input:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-textarea {width: 100%;min-height: 80px;padding: 10px 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;resize: vertical;transition: all 0.2s;}
+        .form-textarea:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-error {color: var(--danger);font-size: 12px;margin-top: 4px;display: none;}
+        .form-group.error .form-input,
+        .form-group.error .form-textarea {border-color: var(--danger);}
+        .form-group.error .form-error {display: block;}
+        
+        /* 树形权限结构 */
+        .permission-tree {border: 1px solid var(--gray-200);border-radius: 10px;overflow: hidden;}
+        .tree-item {border-bottom: 1px solid var(--gray-100);}
+        .tree-item:last-child {border-bottom: none;}
+        
+        /* 树形节点-一级 */
+        .tree-node {padding: 12px 16px;transition: all 0.2s;}
+        .tree-node:hover {background: rgba(22, 93, 255, 0.03);}
+        .tree-header {display: flex;align-items: center;gap: 10px;}
+        .tree-toggle {width: 24px;height: 24px;display: flex;align-items: center;justify-content: center;cursor: pointer;border-radius: 4px;transition: all 0.2s;}
+        .tree-toggle:hover {background: rgba(22, 93, 255, 0.1);}
+        .tree-toggle i {font-size: 12px;color: var(--gray-600);transition: all 0.2s;}
+        .tree-item.collapsed .tree-toggle i {transform: rotate(-90deg);}
+        .tree-checkbox {width: 18px;height: 18px;cursor: pointer;accent-color: var(--primary);transition: all 0.2s;}
+        .tree-checkbox:indeterminate {accent-color: var(--primary);opacity: 0.7;}
+        .tree-checkbox:hover {transform: scale(1.1);}
+        .tree-icon {width: 28px;height: 28px;background: linear-gradient(135deg, rgba(22,93,255,0.1), rgba(22,93,255,0.05));border-radius: 6px;display: flex;align-items: center;justify-content: center;color: var(--primary);}
+        .tree-icon i {font-size: 14px;}
+        .tree-title {flex: 1;font-size: 14px;font-weight: 600;color: var(--gray-900);}
+        .tree-actions {display: flex;gap: 12px;}
+        .tree-select-all {font-size: 12px;color: var(--primary);cursor: pointer;transition: all 0.2s;}
+        .tree-select-all:hover {text-decoration: underline;}
+        
+        /* 树形子节点 */
+        .tree-children {background: var(--gray-100);padding: 10px 0;display: block;}
+        .tree-item.collapsed .tree-children {display: none;}
+        .tree-child {display: flex;align-items: center;padding: 10px 16px 10px 72px;gap: 10px;transition: all 0.2s;}
+        .tree-child:hover {background: rgba(22, 93, 255, 0.03);}
+        .child-checkbox {width: 18px;height: 18px;cursor: pointer;accent-color: var(--primary);}
+        .child-label {font-size: 14px;color: var(--gray-900);cursor: pointer;flex: 1;}
+        .child-hint {font-size: 12px;color: var(--gray-600);}
+        .tree-child {transition: background-color 0.2s;}
+        .tree-child:hover {background-color: rgba(22, 93, 255, 0.08) !important;}
+        .child-checkbox {width: 16px;height: 16px;cursor: pointer;accent-color: var(--primary);transition: all 0.2s;}
+        .child-checkbox:hover {transform: scale(1.1);}
+        .child-label {cursor: pointer;user-select: none;}
+        .tree-select-all {padding: 4px 10px;border-radius: 4px;transition: all 0.2s;font-weight: 500;}
+        .tree-select-all:hover {background: rgba(22, 93, 255, 0.1);text-decoration: none !important;}
+        /* 确认弹窗 */
+        .confirm-icon {font-size: 64px;text-align: center;margin-bottom: 16px;color: var(--danger);}
+        .confirm-message {text-align: center;font-size: 16px;color: var(--gray-900);margin-bottom: 8px;}
+        .confirm-desc {text-align: center;font-size: 14px;color: var(--gray-600);margin-bottom: 24px;}
+        /* 权限标签展示 */
+        .permission-tags {display: flex;flex-wrap: wrap;gap: 6px;}
+        .permission-tag {font-size: 11px;padding: 2px 8px;background: rgba(22, 93, 255, 0.1);color: var(--primary);border-radius: 4px;}
+        /* 空状态 */
+        .empty-state {text-align: center;padding: 60px 20px;color: var(--gray-600);}
+        .empty-state i {font-size: 64px;margin-bottom: 16px;color: var(--gray-300);}
+        .empty-state p {font-size: 14px;}
+        /* 搜索区域 */
+        .search-bar {display: flex;gap: 12px;margin-bottom: 0;flex-wrap: wrap;align-items: flex-end;}
+        .search-field {display: flex;flex-direction: column;gap: 4px;}
+        .search-field-label {font-size: 12px;color: var(--gray-600);font-weight: 500;}
+        .search-field-input {width: 200px;height: 36px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 13px;outline: none;transition: all 0.2s;}
+        .search-field-input:focus {border-color: var(--primary);box-shadow: 0 0 0 2px rgba(22,93,255,0.08);}
+        .search-field-input::placeholder {color: var(--gray-300);}
+    </style>
+</head>
+<body>
+    <div id="mainPage">
+        <main class="content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">岗位列表</h3>
+                        <button class="btn btn-primary" onclick="openAddModal()">
+                            <i class="fa fa-plus"></i> 新增岗位
+                        </button>
+                    </div>
+                    <div style="padding:12px 24px;border-bottom:1px solid var(--gray-200);">
+                        <div class="search-bar">
+                            <div class="search-field">
+                                <span class="search-field-label">岗位名称</span>
+                                <div id="searchRoleNameContainer"></div>
+                            </div>
+                            <button class="btn btn-sm btn-primary" style="height:36px;" onclick="renderRoleTable()">搜索</button>
+                            <button class="btn btn-sm btn-default" style="height:36px;" onclick="clearSearch()">清空</button>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <table class="table" id="roleTable">
+                            <thead>
+                                <tr>
+                                    <th>岗位名称</th>
+                                    <th>岗位描述</th>
+                                    <th>包含权限</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roleTableBody">
+                                <!-- 动态渲染 -->
+                            </tbody>
+                        </table>
+                        <div class="empty-state" id="emptyState" style="display: none;">
+                            <i class="fa fa-user-circle-o"></i>
+                            <p>暂无岗位数据</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+    </div>
+
+
+    <!-- 新增/编辑岗位弹窗 -->
+    <div class="modal-overlay" id="roleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">新增岗位</div>
+                <button class="modal-close" onclick="closeRoleModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="roleForm">
+                    <input type="hidden" id="roleId">
+                    <div class="form-group" id="nameGroup">
+                        <label class="form-label">岗位名称 <span class="required">*</span></label>
+                        <input type="text" id="roleName" class="form-input" placeholder="请输入岗位名称，如：管理员、运营人员">
+                        <div class="form-error" id="nameError">请填写岗位名称</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">岗位描述</label>
+                        <textarea id="roleDescription" class="form-textarea" placeholder="请输入岗位描述（可选）"></textarea>
+                    </div>
+                    <div class="form-group" id="permissionGroup">
+                        <label class="form-label">岗位权限 <span class="required">*</span></label>
+                        <div class="form-error" id="permissionError">请选择岗位权限</div>
+                        
+                        <div class="permission-tree">
+                            <!-- 游戏管理 -->
+                            <div class="tree-item" id="tree-game">
+                                <div class="tree-node">
+                                    <div class="tree-header">
+                                        <div class="tree-toggle" onclick="toggleTree('game')">
+                                            <i class="fa fa-chevron-down"></i>
+                                        </div>
+                                        <input type="checkbox" class="tree-checkbox" id="pageGame" onchange="togglePage('game')">
+                                        <div class="tree-icon">
+                                            <i class="fa fa-gamepad"></i>
+                                        </div>
+                                        <label class="tree-title" for="pageGame">游戏管理</label>
+                                        <div class="tree-actions">
+                                            <span class="tree-select-all" onclick="selectAllPage('game')">全选</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tree-children">
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="game_view" data-page="game" data-action="view" onchange="updatePermission()">
+                                        <label class="child-label" for="game_view">查看</label>
+                                        <span class="child-hint">查看游戏数据</span>
+                                    </div>
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="game_add" data-page="game" data-action="add" onchange="updatePermission()">
+                                        <label class="child-label" for="game_add">新增</label>
+                                        <span class="child-hint">新增游戏母包</span>
+                                    </div>
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="game_edit" data-page="game" data-action="edit" onchange="updatePermission()">
+                                        <label class="child-label" for="game_edit">编辑</label>
+                                        <span class="child-hint">编辑游戏信息</span>
+                                    </div>
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="game_delete" data-page="game" data-action="delete" onchange="updatePermission()">
+                                        <label class="child-label" for="game_delete">删除</label>
+                                        <span class="child-hint">删除游戏母包</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 改包系统 -->
+                            <div class="tree-item" id="tree-repkg">
+                                <div class="tree-node">
+                                    <div class="tree-header">
+                                        <div class="tree-toggle" onclick="toggleTree('repkg')">
+                                            <i class="fa fa-chevron-down"></i>
+                                        </div>
+                                        <input type="checkbox" class="tree-checkbox" id="pageRepkg" onchange="togglePage('repkg')">
+                                        <div class="tree-icon">
+                                            <i class="fa fa-pencil-square-o"></i>
+                                        </div>
+                                        <label class="tree-title" for="pageRepkg">改包系统</label>
+                                        <div class="tree-actions">
+                                            <span class="tree-select-all" onclick="selectAllPage('repkg')">全选</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tree-children">
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="repkg_view" data-page="repkg" data-action="view" onchange="updatePermission()">
+                                        <label class="child-label" for="repkg_view">查看</label>
+                                        <span class="child-hint">查看改包任务</span>
+                                    </div>
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="repkg_add" data-page="repkg" data-action="add" onchange="updatePermission()">
+                                        <label class="child-label" for="repkg_add">新增</label>
+                                        <span class="child-hint">创建改包任务</span>
+                                    </div>
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="repkg_edit" data-page="repkg" data-action="edit" onchange="updatePermission()">
+                                        <label class="child-label" for="repkg_edit">编辑</label>
+                                        <span class="child-hint">编辑改包任务</span>
+                                    </div>
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="repkg_delete" data-page="repkg" data-action="delete" onchange="updatePermission()">
+                                        <label class="child-label" for="repkg_delete">删除</label>
+                                        <span class="child-hint">删除改包任务</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 系统管理 -->
+                            <div class="tree-item" id="tree-system">
+                                <div class="tree-node">
+                                    <div class="tree-header">
+                                        <div class="tree-toggle" onclick="toggleTree('system')">
+                                            <i class="fa fa-chevron-down"></i>
+                                        </div>
+                                        <input type="checkbox" class="tree-checkbox" id="pageSystem" onchange="togglePage('system')">
+                                        <div class="tree-icon">
+                                            <i class="fa fa-cog"></i>
+                                        </div>
+                                        <label class="tree-title" for="pageSystem">系统管理</label>
+                                        <div class="tree-actions">
+                                            <span class="tree-select-all" onclick="selectAllPage('system')">全选</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tree-children">
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="system_view" data-page="system" data-action="view" onchange="updatePermission()">
+                                        <label class="child-label" for="system_view">查看</label>
+                                        <span class="child-hint">查看用户和岗位</span>
+                                    </div>
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="system_add" data-page="system" data-action="add" onchange="updatePermission()">
+                                        <label class="child-label" for="system_add">新增</label>
+                                        <span class="child-hint">新增用户和岗位</span>
+                                    </div>
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="system_edit" data-page="system" data-action="edit" onchange="updatePermission()">
+                                        <label class="child-label" for="system_edit">编辑</label>
+                                        <span class="child-hint">编辑用户和岗位</span>
+                                    </div>
+                                    <div class="tree-child">
+                                        <input type="checkbox" class="child-checkbox" id="system_delete" data-page="system" data-action="delete" onchange="updatePermission()">
+                                        <label class="child-label" for="system_delete">删除</label>
+                                        <span class="child-hint">删除用户和岗位</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeRoleModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveRole()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal" style="width: 420px;">
+            <div class="modal-header">
+                <div class="modal-title">删除岗位</div>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon"><i class="fa fa-exclamation-triangle"></i></div>
+                <div class="confirm-message">确定要删除该岗位吗？</div>
+                <div class="confirm-desc" id="deleteDesc">删除后无法恢复，请谨慎操作</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeDeleteModal()">取消</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="导航.js"></script>
+    <script src="common.js"></script>
+    <script>
+        let currentEditRoleId = null;
+        let deleteRoleId = null;
+        let searchRoleNameSelect;
+
+        function initSearchSelect() {
+            const roles = Storage.getRoles();
+            searchRoleNameSelect = new SearchSelect('searchRoleNameContainer', {
+                placeholder: '搜索岗位名称...',
+                data: roles.map(role => ({ value: role.name, label: role.name })),
+                onChange: () => renderRoleTable(),
+                width: '200px'
+            });
+        }
+
+        function clearSearch() {
+            if (searchRoleNameSelect) searchRoleNameSelect.clear();
+            renderRoleTable();
+        }
+
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Navigation && Navigation.init) {
+                Navigation.init('岗位管理');
+            }
+            
+            // 检查登录
+            if (!UI.checkLogin()) return;
+            
+            // 检查系统管理权限
+            if (!Permission.hasPageAccess('system') || !Permission.hasActionPermission('system', 'view')) {
+                UI.showMessage('error', '您没有访问该页面的权限');
+                window.location.href = '母包列表.html';
+                return;
+            }
+
+            // 初始化UI
+            UI.initUserInfo();
+            UI.initUserDropdown();
+            
+            // 绑定事件
+            // 点击遮罩关闭弹窗
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('show');
+                    }
+                });
+            });
+
+            // 渲染岗位列表
+            initSearchSelect();
+            renderRoleTable();
+        });
+
+        // 渲染岗位列表
+        function renderRoleTable() {
+            const searchKeyword = searchRoleNameSelect ? searchRoleNameSelect.getValue().toLowerCase() : '';
+            const allRoles = Storage.getRoles();
+            const roles = allRoles.filter(role => {
+                if (!searchKeyword) return true;
+                return (role.name && role.name.toLowerCase().includes(searchKeyword)) ||
+                       (role.description && role.description.toLowerCase().includes(searchKeyword));
+            });
+            const tbody = document.getElementById('roleTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.getElementById('roleTable');
+
+            if (roles.length === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            emptyState.style.display = 'none';
+
+            tbody.innerHTML = roles.map(role => {
+                const permissionTags = [];
+                role.permissions.pages.forEach(page => {
+                    const pageInfo = Permission.PAGES[page];
+                    if (pageInfo) {
+                        permissionTags.push('<span class="permission-tag">' + pageInfo.name + '</span>');
+                    }
+                });
+
+                const isSuperAdmin = role.id === 'role_admin';
+                const isUsed = RoleManager.isRoleUsed(role.id);
+
+                return `
+                    <tr>
+                        <td>
+                            <strong>${role.name}</strong>
+                            ${isSuperAdmin ? '<span class="tag tag-success" style="margin-left: 8px;">系统默认</span>' : ''}
+                        </td>
+                        <td>${role.description || '-'}</td>
+                        <td><div class="permission-tags">${permissionTags.join('')}</div></td>
+                        <td>${role.createdAt}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="openEditModal('${role.id}')">编辑</button>
+                            ${!isSuperAdmin ? `<button class="btn btn-sm btn-danger" style="margin-left: 8px;" onclick="openDeleteModal('${role.id}')">删除</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 打开新增弹窗
+        function openAddModal() {
+            currentEditRoleId = null;
+            document.getElementById('modalTitle').textContent = '新增岗位';
+            document.getElementById('roleId').value = '';
+            document.getElementById('roleName').value = '';
+            document.getElementById('roleDescription').value = '';
+            resetPermissions();
+            clearErrors();
+            document.getElementById('roleModal').classList.add('show');
+        }
+
+        // 打开编辑弹窗
+        function openEditModal(roleId) {
+            const role = Storage.getRoleById(roleId);
+            if (!role) {
+                UI.showMessage('error', '岗位不存在');
+                return;
+            }
+
+            currentEditRoleId = roleId;
+            document.getElementById('modalTitle').textContent = '编辑岗位';
+            document.getElementById('roleId').value = roleId;
+            document.getElementById('roleName').value = role.name;
+            document.getElementById('roleDescription').value = role.description || '';
+            
+            // 填充权限
+            resetPermissions();
+            loadPermissions(role.permissions);
+            clearErrors();
+            document.getElementById('roleModal').classList.add('show');
+        }
+
+        // 关闭岗位弹窗
+        function closeRoleModal() {
+            document.getElementById('roleModal').classList.remove('show');
+            currentEditRoleId = null;
+        }
+
+        // 切换树形节点折叠状态
+        function toggleTree(page) {
+            const treeItem = document.getElementById('tree-' + page);
+            if (treeItem) {
+                treeItem.classList.toggle('collapsed');
+            }
+        }
+
+        // 全选/取消全选某个页面的所有权限
+        function selectAllPage(page) {
+            const pageCheckbox = document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1));
+            const isChecked = !pageCheckbox.checked; // 取反，实现切换效果
+            
+            // 设置页面复选框状态
+            pageCheckbox.checked = isChecked;
+            
+            // 设置该页面下所有操作权限
+            ['view', 'add', 'edit', 'delete'].forEach(action => {
+                const checkbox = document.getElementById(page + '_' + action);
+                if (checkbox) checkbox.checked = isChecked;
+            });
+            
+            updatePageActionState(page, isChecked);
+            updatePermission();
+        }
+
+        // 重置权限选择
+        function resetPermissions() {
+            ['game', 'repkg', 'system'].forEach(page => {
+                document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1)).checked = false;
+                ['view', 'add', 'edit', 'delete'].forEach(action => {
+                    const checkbox = document.getElementById(page + '_' + action);
+                    if (checkbox) checkbox.checked = false;
+                });
+                updatePageActionState(page, false);
+            });
+        }
+
+        // 加载权限
+        function loadPermissions(permissions) {
+            // 先重置所有状态
+            resetPermissions();
+            
+            // 加载页面权限
+            permissions.pages.forEach(page => {
+                const pageCheckbox = document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1));
+                if (pageCheckbox) pageCheckbox.checked = true;
+                updatePageActionState(page, true);
+            });
+
+            // 加载操作权限
+            Object.keys(permissions.actions).forEach(page => {
+                const actions = permissions.actions[page];
+                actions.forEach(action => {
+                    const checkbox = document.getElementById(page + '_' + action);
+                    if (checkbox) checkbox.checked = true;
+                });
+            });
+            
+            // 重新计算并更新半选状态
+            updatePermission();
+        }
+
+        // 切换页面权限
+        function togglePage(page) {
+            const pageCheckbox = document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1));
+            const checked = pageCheckbox.checked;
+            updatePageActionState(page, checked);
+            
+            // 如果选中页面，默认选中查看权限
+            if (checked) {
+                const viewCheckbox = document.getElementById(page + '_view');
+                if (viewCheckbox) viewCheckbox.checked = true;
+            }
+        }
+
+        // 更新页面操作按钮状态
+        function updatePageActionState(page, enabled) {
+            ['view', 'add', 'edit', 'delete'].forEach(action => {
+                const wrapper = document.getElementById(page + '_' + action + '_wrapper');
+                const checkbox = document.getElementById(page + '_' + action);
+                if (wrapper) {
+                    if (!enabled) {
+                        wrapper.classList.add('disabled');
+                        if (checkbox) checkbox.checked = false;
+                    } else {
+                        wrapper.classList.remove('disabled');
+                    }
+                }
+            });
+        }
+
+        // 更新权限状态（智能父子联动）
+        function updatePermission() {
+            ['game', 'repkg', 'system'].forEach(page => {
+                const pageCheckbox = document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1));
+                const actionCheckboxes = ['view', 'add', 'edit', 'delete']
+                    .map(action => document.getElementById(page + '_' + action))
+                    .filter(cb => cb !== null);
+                
+                const checkedCount = actionCheckboxes.filter(cb => cb.checked).length;
+                const hasAnyAction = checkedCount > 0;
+                const hasAllActions = checkedCount === actionCheckboxes.length;
+                
+                // 更新父复选框状态
+                if (pageCheckbox) {
+                    pageCheckbox.checked = hasAnyAction;
+                    pageCheckbox.indeterminate = hasAnyAction && !hasAllActions; // 半选状态
+                }
+                
+                updatePageActionState(page, hasAnyAction);
+            });
+        }
+
+        // 获取当前选择的权限
+        function getSelectedPermissions() {
+            const pages = [];
+            const actions = {};
+
+            ['game', 'repkg', 'system'].forEach(page => {
+                const pageActions = [];
+                ['view', 'add', 'edit', 'delete'].forEach(action => {
+                    const checkbox = document.getElementById(page + '_' + action);
+                    if (checkbox && checkbox.checked) {
+                        pageActions.push(action);
+                    }
+                });
+                if (pageActions.length > 0) {
+                    pages.push(page);
+                    actions[page] = pageActions;
+                }
+            });
+
+            return { pages, actions };
+        }
+
+        // 清除错误状态
+        function clearErrors() {
+            document.querySelectorAll('.form-group').forEach(group => {
+                group.classList.remove('error');
+            });
+        }
+
+        // 显示错误
+        function showError(fieldId, message) {
+            const group = document.getElementById(fieldId + 'Group');
+            const error = document.getElementById(fieldId + 'Error');
+            if (group) group.classList.add('error');
+            if (error) error.textContent = message;
+        }
+
+        // 保存岗位
+        function saveRole() {
+            clearErrors();
+
+            const name = document.getElementById('roleName').value.trim();
+            const description = document.getElementById('roleDescription').value.trim();
+            const permissions = getSelectedPermissions();
+
+            // 验证
+            let hasError = false;
+            const nameValidation = Validator.validateRoleName(name, currentEditRoleId);
+            if (!nameValidation.valid) {
+                showError('name', nameValidation.message);
+                hasError = true;
+            }
+
+            const permValidation = Validator.validateRolePermissions(permissions);
+            if (!permValidation.valid) {
+                showError('permission', permValidation.message);
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            const roleData = { name, description, permissions };
+
+            if (currentEditRoleId) {
+                // 更新
+                RoleManager.updateRole(currentEditRoleId, roleData);
+                UI.showMessage('success', '岗位更新成功');
+            } else {
+                // 新增
+                RoleManager.addRole(roleData);
+                UI.showMessage('success', '岗位创建成功');
+            }
+
+            closeRoleModal();
+            renderRoleTable();
+        }
+
+        // 打开删除确认弹窗
+        function openDeleteModal(roleId) {
+            const role = Storage.getRoleById(roleId);
+            if (!role) {
+                UI.showMessage('error', '岗位不存在');
+                return;
+            }
+
+            deleteRoleId = roleId;
+            const isUsed = RoleManager.isRoleUsed(roleId);
+            
+            if (isUsed) {
+                document.getElementById('deleteDesc').textContent = '该岗位已关联账号，不可删除，请先解除账号与该岗位的关联';
+            } else {
+                document.getElementById('deleteDesc').textContent = '删除后无法恢复，请谨慎操作';
+            }
+
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        // 关闭删除弹窗
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+            deleteRoleId = null;
+        }
+
+        // 确认删除
+        function confirmDelete() {
+            if (!deleteRoleId) return;
+
+            const result = RoleManager.deleteRole(deleteRoleId);
+            if (result.success) {
+                UI.showMessage('success', '岗位删除成功');
+                closeDeleteModal();
+                renderRoleTable();
+            } else {
+                UI.showMessage('error', result.message);
+                closeDeleteModal();
+            }
+        }
+
+        </script>
+</body>
+</html>
+

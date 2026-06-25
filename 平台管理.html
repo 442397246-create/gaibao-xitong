@@ -1,0 +1,713 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>平台管理 - 在线分包管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;}
+        body {font-family: "Microsoft Yahei", sans-serif;background-color: #F2F3F5;color: #1D2129;}
+        :root {
+            --primary: #165DFF;--success: #00B42A;--warning: #FF7D00;--danger: #F53F3F;
+            --gray-100: #F2F3F5;--gray-200: #E5E6EB;--gray-300: #C9CDD4;
+            --gray-600: #86909C;--gray-900: #1D2129;
+        }
+        .content {padding: 24px;flex: 1;}
+        /* 卡片 */
+        .card {background: white;border-radius: 12px;box-shadow: 0 2px 8px rgba(0,0,0,0.06);}
+        .card-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;}
+        .card-title {font-size: 16px;font-weight: 600;color: var(--gray-900);}
+        .card-body {padding: 0;}
+        /* 按钮 */
+        .btn {padding: 8px 24px;border-radius: 8px;border: none;cursor: pointer;font-size: 14px;transition: all 0.3s;display: inline-flex;align-items: center;justify-content: center;gap: 6px;text-decoration: none;}
+        .btn-primary {background-color: var(--primary);color: white;}
+        .btn-primary:hover {background-color: #0D47A1;}
+        .btn-sm {padding: 4px 12px;font-size: 12px;border-radius: 6px;}
+        .btn-default {background-color: white;border: 1px solid var(--gray-200);color: var(--gray-900);}
+        .btn-default:hover {background-color: var(--gray-100);}
+        .btn-danger {background-color: var(--danger);color: white;}
+        .btn-danger:hover {background-color: #D92B2B;}
+        .btn-xs {padding: 3px 10px;font-size: 12px;border-radius: 4px;}
+        /* 表格 */
+        .table {width: 100%;border-collapse: collapse;}
+        .table th {padding: 12px 16px;background: var(--gray-100);font-weight: 500;text-align: left;font-size: 14px;border-bottom: 1px solid var(--gray-200);}
+        .table td {padding: 16px;border-bottom: 1px solid var(--gray-200);font-size: 14px;}
+        /* 标签 */
+        .tag {display: inline-block;padding: 4px 10px;border-radius: 6px;font-size: 12px;font-weight: 500;}
+        .tag-success {background: rgba(0, 180, 42, 0.1);color: var(--success);}
+        .tag-danger {background: rgba(245, 63, 63, 0.1);color: var(--danger);}
+        /* 消息提示 */
+        .message-box {position: fixed;top: 80px;right: 24px;padding: 12px 24px;border-radius: 8px;color: white;font-size: 14px;z-index: 99999;animation: slideIn 0.3s ease;max-width: 300px;}
+        .message-success {background: var(--success);}
+        .message-error {background: var(--danger);}
+        .message-warning {background: var(--warning);}
+        @keyframes slideIn {from {transform: translateX(100%);opacity: 0;} to {transform: translateX(0);opacity: 1;}}
+        @keyframes slideOut {from {transform: translateX(0);opacity: 1;} to {transform: translateX(100%);opacity: 0;}}
+        /* 弹窗 */
+        .modal-overlay {position: fixed;top: 0;left: 0;right: 0;bottom: 0;background: rgba(0,0,0,0.5);display: none;justify-content: center;align-items: center;z-index: 9999;}
+        .modal-overlay.show {display: flex;}
+        .modal {background: white;border-radius: 16px;padding: 0;width: 680px;max-width: 90vw;max-height: 90vh;overflow: hidden;animation: scaleIn 0.3s ease;display: flex;flex-direction: column;}
+        @keyframes scaleIn {
+            from {opacity: 0;transform: scale(0.95);}
+            to {opacity: 1;transform: scale(1);}
+        }
+        .modal-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;flex-shrink: 0;}
+        .modal-title {font-size: 18px;font-weight: 600;color: var(--gray-900);}
+        .modal-close {background: none;border: none;font-size: 24px;cursor: pointer;color: var(--gray-600);padding: 4px;}
+        .modal-close:hover {color: var(--gray-900);}
+        .modal-body {padding: 24px;overflow-y: auto;flex: 1;}
+        .modal-footer {padding: 16px 24px;border-top: 1px solid var(--gray-200);display: flex;justify-content: flex-end;gap: 12px;flex-shrink: 0;}
+        /* 表单 */
+        .form-group {margin-bottom: 20px;}
+        .form-label {display: block;margin-bottom: 8px;font-size: 14px;font-weight: 500;color: var(--gray-900);}
+        .form-label .required {color: var(--danger);}
+        .form-input {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;transition: all 0.2s;}
+        .form-input:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-textarea {width: 100%;min-height: 72px;padding: 10px 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;resize: vertical;transition: all 0.2s;font-family: Consolas, Monaco, monospace;}
+        .form-textarea:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-select {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;background: white;transition: all 0.2s;appearance: auto;}
+        .form-select:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-row {display: grid;grid-template-columns: 1fr 1fr;gap: 16px;}
+        /* 开关组件 */
+        .toggle-wrapper {display: flex;align-items: center;gap: 12px;}
+        .toggle-switch {position: relative;display: inline-block;width: 44px;height: 24px;flex-shrink: 0;}
+        .toggle-switch input {opacity: 0;width: 0;height: 0;}
+        .toggle-slider {position: absolute;cursor: pointer;top: 0;left: 0;right: 0;bottom: 0;background: var(--gray-300);border-radius: 24px;transition: all 0.3s;}
+        .toggle-slider:before {content: '';position: absolute;height: 18px;width: 18px;left: 3px;bottom: 3px;background: white;border-radius: 50%;transition: all 0.3s;box-shadow: 0 1px 3px rgba(0,0,0,0.2);}
+        .toggle-switch input:checked + .toggle-slider {background: var(--primary);}
+        .toggle-switch input:checked + .toggle-slider:before {transform: translateX(20px);}
+        .toggle-hint {font-size: 13px;color: var(--gray-600);}
+        /* 确认弹窗 */
+        .confirm-icon {font-size: 64px;text-align: center;margin-bottom: 16px;color: var(--danger);}
+        .confirm-message {text-align: center;font-size: 16px;color: var(--gray-900);margin-bottom: 8px;}
+        .confirm-desc {text-align: center;font-size: 14px;color: var(--gray-600);margin-bottom: 24px;}
+        /* 空状态 */
+        .empty-state {text-align: center;padding: 60px 20px;color: var(--gray-600);}
+        .empty-state i {font-size: 64px;margin-bottom: 16px;color: var(--gray-300);}
+        .empty-state p {font-size: 14px;}
+        /* 操作按钮组 */
+        .action-btns {display: flex;gap: 8px;}
+        /* 搜索下拉选择组件 */
+        .search-select-wrapper {flex-shrink: 0;}
+        .search-select-input-wrap {position: relative;}
+        .search-select-input {width: 100%;height: 36px;padding: 0 32px 0 32px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 13px;outline: none;transition: all 0.2s;background: white;}
+        .search-select-input:focus {border-color: var(--primary);box-shadow: 0 0 0 2px rgba(22,93,255,0.08);}
+        .search-select-input::placeholder {color: var(--gray-300);}
+        .search-icon {position: absolute;left: 10px;top: 50%;transform: translateY(-50%);color: var(--gray-600);font-size: 13px;pointer-events: none;}
+        .dropdown-arrow {position: absolute;right: 8px;top: 50%;transform: translateY(-50%);font-size: 10px;color: var(--gray-600);cursor: pointer;padding: 4px;}
+        .dropdown-arrow:hover {color: var(--primary);}
+        .search-select-dropdown {display: none;position: absolute;top: 40px;left: 0;width: 100%;background: white;border: 1px solid var(--gray-200);border-radius: 8px;box-shadow: 0 6px 20px rgba(0,0,0,0.1);z-index: 200;overflow: hidden;}
+        .search-select-dropdown.show {display: block;}
+        .search-select-all {display: flex;align-items: center;gap: 8px;padding: 10px 14px;border-bottom: 1px solid var(--gray-100);cursor: pointer;font-size: 13px;color: var(--primary);}
+        .search-select-all:hover {background: rgba(22,93,255,0.03);}
+        .search-select-all input {width: 15px;height: 15px;accent-color: var(--primary);cursor: pointer;}
+        .search-select-list {max-height: 200px;overflow-y: auto;}
+        .search-select-item {display: flex;align-items: center;gap: 8px;padding: 9px 14px;cursor: pointer;font-size: 13px;color: var(--gray-900);transition: background 0.1s;}
+        .search-select-item:hover {background: rgba(22,93,255,0.03);}
+        .search-select-item input {width: 15px;height: 15px;accent-color: var(--primary);cursor: pointer;}
+        .search-select-item label {cursor: pointer;flex: 1;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;}
+    </style>
+</head>
+<body>
+    <div id="mainPage">
+        <main class="content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">平台列表</h3>
+                        <button class="btn btn-primary" onclick="openPlatformModal()">
+                            <i class="fa fa-plus"></i> 新增平台
+                        </button>
+                    </div>
+                    <div style="padding:12px 24px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <!-- 平台名称搜索筛选 -->
+                        <div class="search-select-wrapper" id="wrapper_platformName" style="position:relative;width:200px;">
+                            <div class="search-select-input-wrap">
+                                <input type="text" class="search-select-input" id="searchInput_platformName" placeholder="搜索平台名称..." oninput="onSearchInput('platformName')" onfocus="showSearchDropdown('platformName')">
+                                <i class="fa fa-search search-icon"></i>
+                                <i class="fa fa-chevron-down dropdown-arrow" onclick="toggleSearchDropdown('platformName')"></i>
+                            </div>
+                            <div class="search-select-dropdown" id="dropdown_platformName">
+                                <div class="search-select-all" id="allRow_platformName" onclick="toggleSelectAll('platformName')">
+                                    <input type="checkbox" id="checkAll_platformName" onclick="event.stopPropagation()">
+                                    <span>全部</span>
+                                </div>
+                                <div class="search-select-list" id="list_platformName"></div>
+                            </div>
+                        </div>
+                        <!-- 公司名称搜索筛选 -->
+                        <div class="search-select-wrapper" id="wrapper_companyName" style="position:relative;width:200px;">
+                            <div class="search-select-input-wrap">
+                                <input type="text" class="search-select-input" id="searchInput_companyName" placeholder="搜索公司名称..." oninput="onSearchInput('companyName')" onfocus="showSearchDropdown('companyName')">
+                                <i class="fa fa-search search-icon"></i>
+                                <i class="fa fa-chevron-down dropdown-arrow" onclick="toggleSearchDropdown('companyName')"></i>
+                            </div>
+                            <div class="search-select-dropdown" id="dropdown_companyName">
+                                <div class="search-select-all" id="allRow_companyName" onclick="toggleSelectAll('companyName')">
+                                    <input type="checkbox" id="checkAll_companyName" onclick="event.stopPropagation()">
+                                    <span>全部</span>
+                                </div>
+                                <div class="search-select-list" id="list_companyName"></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="applyFilters()"><i class="fa fa-search"></i> 搜索</button>
+                        <button class="btn btn-sm btn-default" onclick="clearAllFilters()">清空</button>
+                    </div>
+                    <div style="padding:6px 24px;border-bottom:1px solid var(--gray-200);display:flex;flex-wrap:wrap;gap:6px;" id="filterTags"></div>
+                    <div class="card-body">
+                        <table class="table" id="platformTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:80px">ID</th>
+                                <th>平台名称</th>
+                                <th>公司名称</th>
+                                    <th>平台状态</th>
+                                    <th>服务有效期至</th>
+                                    <th>创建人</th>
+                                    <th>创建时间</th>
+                                    <th>修改人</th>
+                                    <th>修改时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="platformTableBody"></tbody>
+                        </table>
+                        <div class="empty-state" id="emptyState" style="display: none;">
+                            <i class="fa fa-server"></i>
+                            <p>暂无平台数据，点击"新增平台"开始添加</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+    </div>
+
+
+    <!-- 新增/编辑平台弹窗 -->
+    <div class="modal-overlay" id="platformModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">新增平台</div>
+                <button class="modal-close" onclick="closePlatformModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="platformForm">
+                    <input type="hidden" id="platformId">
+                    <div class="form-group">
+                        <label class="form-label">平台名称 <span class="required">*</span></label>
+                        <input type="text" id="platformName" class="form-input" placeholder="如：抖音平台、快手平台">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">平台状态 <span class="required">*</span></label>
+                            <div class="toggle-wrapper">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="platformStatus" onchange="updateSwitchHint('platformStatusHint', this)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="toggle-hint" id="platformStatusHint">关闭后平台无法登录和操作</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">月分包数量限制</label>
+                            <div class="toggle-wrapper">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="monthlyLimit" onchange="toggleMonthlyLimit()">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="toggle-hint" id="monthlyLimitHint">未开启</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" id="monthlyLimitCountGroup" style="display:none;">
+                        <label class="form-label">月分包数量上限</label>
+                        <input type="number" id="monthlyLimitCount" class="form-input" placeholder="请输入每月允许的分包数量" min="1">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">公司名称 <span class="required">*</span></label>
+                            <input type="text" id="companyName" class="form-input" placeholder="请输入公司名称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">服务有效截止日期</label>
+                            <input type="date" id="validUntil" class="form-input">
+                        </div>
+                    </div>
+                    <div style="border-top:1px solid var(--gray-200);margin:20px 0 8px;padding-top:12px;font-size:12px;color:var(--gray-600);">企业信息</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">企业法人</label>
+                            <input type="text" id="legalPerson" class="form-input" placeholder="请输入企业法人">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">企业统一信用代码</label>
+                            <input type="text" id="creditCode" class="form-input" placeholder="请输入统一信用代码">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">企业注册地址</label>
+                        <input type="text" id="registerAddress" class="form-input" placeholder="请输入企业注册地址">
+                    </div>
+                    <div style="border-top:1px solid var(--gray-200);margin:20px 0 8px;padding-top:12px;font-size:12px;color:var(--gray-600);">游戏参数</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">安卓游戏母包参数</label>
+                            <textarea id="androidParams" class="form-textarea" placeholder='例如:{"channel":"default","version":"1.0"}'></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">IOS游戏母包参数</label>
+                            <textarea id="iosParams" class="form-textarea" placeholder='例如:{"channel":"default","version":"1.0"}'></textarea>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closePlatformModal()">取消</button>
+                <button class="btn btn-primary" onclick="savePlatform()"><i class="fa fa-check"></i> 保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal" style="width: 420px;">
+            <div class="modal-header">
+                <div class="modal-title">确认删除</div>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon"><i class="fa fa-exclamation-triangle"></i></div>
+                <div class="confirm-message">确定要删除该平台吗？</div>
+                <div class="confirm-desc">删除后数据将无法恢复，请谨慎操作</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeDeleteModal()">取消</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="导航.js"></script>
+    <script src="common.js"></script>
+    <script>
+        // ===== 平台数据管理 =====
+        const PLATFORM_KEY = 'repkg_platforms';
+
+        function getPlatforms() {
+            const data = localStorage.getItem(PLATFORM_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function savePlatforms(platforms) {
+            localStorage.setItem(PLATFORM_KEY, JSON.stringify(platforms));
+        }
+
+        // ===== 默认数据初始化 =====
+        function initDefaultPlatforms() {
+            if (!localStorage.getItem(PLATFORM_KEY)) {
+                const now = formatDateTime(new Date());
+                const defaultPlatforms = [
+                    {
+                        id: '0001',
+                        platformName: '抖音平台',
+                        companyName: '北京字节跳动科技有限公司',
+                        creditCode: '91110108MA004YJ47P',
+                        legalPerson: '张一鸣',
+                        registerAddress: '北京市海淀区知春路甲48号',
+                        companyStatus: 'normal',
+                        platformStatus: true,
+                        validUntil: '2027-12-31',
+                        monthlyLimit: false,
+                        monthlyLimitCount: 0,
+                        androidParams: '{"channel":"douyin_default","source":"aggregation"}',
+                        iosParams: '{"channel":"douyin_ios","source":"aggregation"}',
+                        creator: '管理员',
+                        createdAt: now,
+                        modifier: '管理员',
+                        modifiedAt: now
+                    },
+                    {
+                        id: '0002',
+                        platformName: '快手平台',
+                        companyName: '北京快手科技有限公司',
+                        creditCode: '91110108MA004YDR17',
+                        legalPerson: '宿华',
+                        registerAddress: '北京市海淀区上地西路6号',
+                        companyStatus: 'normal',
+                        platformStatus: true,
+                        validUntil: '2026-12-31',
+                        monthlyLimit: true,
+                        monthlyLimitCount: 500,
+                        androidParams: '{"channel":"kuaishou_default"}',
+                        iosParams: '{"channel":"kuaishou_ios"}',
+                        creator: '管理员',
+                        createdAt: now,
+                        modifier: '管理员',
+                        modifiedAt: now
+                    }
+                ];
+                savePlatforms(defaultPlatforms);
+            }
+        }
+
+        // ===== 工具函数 =====
+        function formatDateTime(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const h = String(date.getHours()).padStart(2, '0');
+            const min = String(date.getMinutes()).padStart(2, '0');
+            return `${y}-${m}-${d} ${h}:${min}`;
+        }
+
+        // ===== 开关提示更新 =====
+        function updateSwitchHint(hintId, checkbox) {
+            const hint = document.getElementById(hintId);
+            hint.textContent = checkbox.checked ? '已开启' : '未开启';
+        }
+
+        function toggleMonthlyLimit() {
+            const checked = document.getElementById('monthlyLimit').checked;
+            const group = document.getElementById('monthlyLimitCountGroup');
+            const hint = document.getElementById('monthlyLimitHint');
+            hint.textContent = checked ? '已开启' : '未开启';
+            group.style.display = checked ? 'block' : 'none';
+            if (!checked) {
+                document.getElementById('monthlyLimitCount').value = '';
+            }
+        }
+
+        // ===== 搜索下拉筛选 =====
+        let filterSelections = { platformName: [], companyName: [] };
+
+        function getFilterOptions(field) {
+            return [...new Set(getPlatforms().map(p => p[field]))].filter(Boolean).sort();
+        }
+
+        function onSearchInput(field) {
+            showFilterList(field);
+        }
+
+        function showSearchDropdown(field) {
+            closeAllSearchDropdowns();
+            document.getElementById('dropdown_' + field).classList.add('show');
+            showFilterList(field);
+        }
+
+        function toggleSearchDropdown(field) {
+            const dd = document.getElementById('dropdown_' + field);
+            if (dd.classList.contains('show')) {
+                dd.classList.remove('show');
+            } else {
+                closeAllSearchDropdowns();
+                dd.classList.add('show');
+                showFilterList(field);
+            }
+        }
+
+        function closeAllSearchDropdowns() {
+            document.querySelectorAll('.search-select-dropdown').forEach(d => d.classList.remove('show'));
+        }
+
+        function showFilterList(field) {
+            const keyword = document.getElementById('searchInput_' + field).value.toLowerCase();
+            const allVals = getFilterOptions(field);
+            const filtered = keyword ? allVals.filter(v => v.toLowerCase().includes(keyword)) : allVals;
+            const listEl = document.getElementById('list_' + field);
+            const selected = filterSelections[field];
+
+            // 无搜索关键词且无结果时显示空状态，有搜索词时不显示全选
+            const showAll = !keyword && filtered.length > 0;
+            const allRow = document.getElementById('allRow_' + field);
+            if (allRow) allRow.style.display = showAll ? 'flex' : 'none';
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = '<div style="padding:12px;text-align:center;color:var(--gray-600);font-size:13px;">暂无匹配结果</div>';
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(v => {
+                const checked = selected.includes(v);
+                return `<div class="search-select-item" onclick="toggleFilterItem('${field}','${v.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">
+                    <input type="checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation()">
+                    <label>${v}</label>
+                </div>`;
+            }).join('');
+
+            // 更新全选状态
+            const allCheck = document.getElementById('checkAll_' + field);
+            if (allCheck) allCheck.checked = filtered.length > 0 && filtered.every(v => selected.includes(v));
+        }
+
+        function toggleFilterItem(field, val) {
+            const arr = filterSelections[field];
+            const idx = arr.indexOf(val);
+            if (idx > -1) { arr.splice(idx, 1); } else { arr.push(val); }
+            showFilterList(field);
+            renderFilterTags();
+        }
+
+        function toggleSelectAll(field) {
+            const keyword = document.getElementById('searchInput_' + field).value.toLowerCase();
+            const allVals = getFilterOptions(field);
+            const filtered = keyword ? allVals.filter(v => v.toLowerCase().includes(keyword)) : allVals;
+            const selected = filterSelections[field];
+            const allChecked = filtered.every(v => selected.includes(v));
+
+            if (allChecked) {
+                // 取消全选：移除当前筛选结果
+                filterSelections[field] = selected.filter(v => !filtered.includes(v));
+            } else {
+                // 全选：添加当前筛选结果
+                filtered.forEach(v => { if (!selected.includes(v)) selected.push(v); });
+            }
+            showFilterList(field);
+            renderFilterTags();
+        }
+
+        function renderFilterTags() {
+            const container = document.getElementById('filterTags');
+            let html = '';
+            filterSelections.platformName.forEach(v => {
+                html += `<span class="platform-tag">平台:${v}<span class="platform-tag-remove" onclick="removeFilterTag('platformName','${v.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">&times;</span></span>`;
+            });
+            filterSelections.companyName.forEach(v => {
+                html += `<span class="platform-tag account-tag">企业:${v}<span class="platform-tag-remove" onclick="removeFilterTag('companyName','${v.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">&times;</span></span>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function removeFilterTag(field, val) {
+            filterSelections[field] = filterSelections[field].filter(v => v !== val);
+            renderFilterTags();
+            showFilterList(field);
+        }
+
+        function applyFilters() {
+            closeAllSearchDropdowns();
+            renderPlatformList();
+        }
+
+        function clearAllFilters() {
+            filterSelections = { platformName: [], companyName: [] };
+            document.getElementById('searchInput_platformName').value = '';
+            document.getElementById('searchInput_companyName').value = '';
+            renderFilterTags();
+            renderPlatformList();
+        }
+
+        function getFilteredPlatforms() {
+            let platforms = getPlatforms();
+            if (filterSelections.platformName.length > 0) {
+                platforms = platforms.filter(p => filterSelections.platformName.includes(p.platformName));
+            }
+            if (filterSelections.companyName.length > 0) {
+                platforms = platforms.filter(p => filterSelections.companyName.includes(p.companyName));
+            }
+            return platforms;
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-select-wrapper')) {
+                closeAllSearchDropdowns();
+            }
+        });
+
+        // ===== 渲染平台列表 =====
+        function renderPlatformList() {
+            const platforms = getFilteredPlatforms();
+            const tableBody = document.getElementById('platformTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.getElementById('platformTable');
+
+            if (platforms.length === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = '';
+            emptyState.style.display = 'none';
+
+            tableBody.innerHTML = platforms.map((p, i) => {
+                const platformStatusTag = p.platformStatus !== false
+                    ? '<span class="tag tag-success">开启</span>'
+                    : '<span class="tag tag-danger">关闭</span>';
+                return `
+                    <tr>
+                        <td><code style="background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:12px;">${escHtml(p.id)}</code></td>
+                        <td><strong>${escHtml(p.platformName)}</strong></td>
+                        <td>${escHtml(p.companyName)}</td>
+                        <td>${platformStatusTag}</td>
+                        <td>${p.validUntil || '-'}</td>
+                        <td>${escHtml(p.creator) || '-'}</td>
+                        <td>${p.createdAt || '-'}</td>
+                        <td>${escHtml(p.modifier) || '-'}</td>
+                        <td>${p.modifiedAt || p.updatedAt || '-'}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn btn-sm btn-default" onclick="editPlatform(${i})">
+                                    <i class="fa fa-edit"></i> 编辑
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${i})">
+                                    <i class="fa fa-trash-o"></i> 删除
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function escHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // ===== 弹窗操作 =====
+        let editingIndex = -1;
+        let deletingIndex = -1;
+
+        function openPlatformModal(index) {
+            const modal = document.getElementById('platformModal');
+            const title = document.getElementById('modalTitle');
+            const form = document.getElementById('platformForm');
+
+            if (index !== undefined && index !== null) {
+                editingIndex = index;
+                const platform = getPlatforms()[index];
+                title.textContent = '编辑平台';
+                document.getElementById('platformId').value = platform.id;
+                document.getElementById('platformName').value = platform.platformName || '';
+                document.getElementById('companyName').value = platform.companyName || '';
+                document.getElementById('creditCode').value = platform.creditCode || '';
+                document.getElementById('legalPerson').value = platform.legalPerson || '';
+                document.getElementById('registerAddress').value = platform.registerAddress || '';
+                document.getElementById('validUntil').value = platform.validUntil || '';
+                document.getElementById('androidParams').value = platform.androidParams || '';
+                document.getElementById('iosParams').value = platform.iosParams || '';
+
+                // 开关状态
+                setSwitch('platformStatus', platform.platformStatus !== false, 'platformStatusHint');
+                setSwitch('monthlyLimit', platform.monthlyLimit, 'monthlyLimitHint');
+                document.getElementById('monthlyLimitCount').value = platform.monthlyLimitCount || '';
+                document.getElementById('monthlyLimitCountGroup').style.display = platform.monthlyLimit ? 'block' : 'none';
+            } else {
+                editingIndex = -1;
+                title.textContent = '新增平台';
+                form.reset();
+                document.getElementById('platformId').value = '';
+                // 重置所有开关
+                setSwitch('platformStatus', true, 'platformStatusHint');
+                setSwitch('monthlyLimit', false, 'monthlyLimitHint');
+                document.getElementById('monthlyLimitCountGroup').style.display = 'none';
+            }
+
+            modal.classList.add('show');
+        }
+
+        function setSwitch(id, value, hintId) {
+            const checkbox = document.getElementById(id);
+            checkbox.checked = value;
+            document.getElementById(hintId).textContent = value ? '已开启' : '未开启';
+        }
+
+        function closePlatformModal() {
+            document.getElementById('platformModal').classList.remove('show');
+        }
+
+        function savePlatform() {
+            const platformName = document.getElementById('platformName').value.trim();
+            const companyName = document.getElementById('companyName').value.trim();
+
+            if (!platformName) { UI.showMessage('error', '请输入平台名称'); return; }
+            if (!companyName) { UI.showMessage('error', '请输入企业名称'); return; }
+
+            const now = formatDateTime(new Date());
+            const currentUser = Storage.getCurrentUser();
+            const operator = currentUser ? (currentUser.nickname || currentUser.username) : 'admin';
+
+            const platform = {
+                platformName,
+                companyName,
+                creditCode: document.getElementById('creditCode').value.trim(),
+                legalPerson: document.getElementById('legalPerson').value.trim(),
+                registerAddress: document.getElementById('registerAddress').value.trim(),
+                companyStatus: 'normal',
+                platformStatus: document.getElementById('platformStatus').checked,
+                validUntil: document.getElementById('validUntil').value,
+                monthlyLimit: document.getElementById('monthlyLimit').checked,
+                monthlyLimitCount: parseInt(document.getElementById('monthlyLimitCount').value) || 0,
+                androidParams: document.getElementById('androidParams').value.trim(),
+                iosParams: document.getElementById('iosParams').value.trim(),
+                modifier: operator,
+                modifiedAt: now
+            };
+
+            const platforms = getPlatforms();
+
+            if (editingIndex >= 0) {
+                // 编辑模式：保留原有 id、creator 和 createdAt
+                platform.id = platforms[editingIndex].id;
+                platform.creator = platforms[editingIndex].creator;
+                platform.createdAt = platforms[editingIndex].createdAt;
+                platforms[editingIndex] = platform;
+                UI.showMessage('success', '平台信息更新成功');
+            } else {
+                // 新增模式
+                platform.creator = operator;
+                const maxId = platforms.reduce((max, p) => {
+                    const num = parseInt(p.id, 10);
+                    return Math.max(max, isNaN(num) ? 0 : num);
+                }, 0);
+                platform.id = String(maxId + 1).padStart(4, '0');
+                platform.createdAt = now;
+                platforms.push(platform);
+                UI.showMessage('success', '平台添加成功');
+            }
+
+            savePlatforms(platforms);
+            closePlatformModal();
+            renderPlatformList();
+        }
+
+        function editPlatform(index) {
+            openPlatformModal(index);
+        }
+
+        function openDeleteModal(index) {
+            deletingIndex = index;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        function closeDeleteModal() {
+            deletingIndex = -1;
+            document.getElementById('deleteModal').classList.remove('show');
+        }
+
+        function confirmDelete() {
+            if (deletingIndex < 0) return;
+            const platforms = getPlatforms();
+            platforms.splice(deletingIndex, 1);
+            savePlatforms(platforms);
+            UI.showMessage('success', '平台已删除');
+            closeDeleteModal();
+            renderPlatformList();
+        }
+
+        // ===== 页面初始化 =====
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Navigation && Navigation.init) {
+                Navigation.init('平台管理');
+            }
+            
+            if (!UI.checkLogin()) return;
+            initDefaultPlatforms();
+            UI.initUserInfo();
+            UI.initUserDropdown();
+            renderPlatformList();
+        });
+    </script>
+</body>
+</html>
+

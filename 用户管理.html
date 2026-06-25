@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - 在线分包管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;}
+        body {font-family: "Microsoft Yahei", sans-serif;background-color: #F2F3F5;color: #1D2129;}
+        :root {
+            --primary: #165DFF;--success: #00B42A;--warning: #FF7D00;--danger: #F53F3F;
+            --gray-100: #F2F3F5;--gray-200: #E5E6EB;--gray-300: #C9CDD4;
+            --gray-600: #86909C;--gray-900: #1D2129;
+        }
+        .content {padding: 24px;flex: 1;}
+        /* 卡片 */
+        .card {background: white;border-radius: 12px;box-shadow: 0 2px 8px rgba(0,0,0,0.06);}
+        .card-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;}
+        .card-title {font-size: 16px;font-weight: 600;color: var(--gray-900);}
+        .card-body {padding: 24px;}
+        /* 按钮 */
+        .btn {padding: 8px 24px;border-radius: 8px;border: none;cursor: pointer;font-size: 14px;transition: all 0.3s;display: inline-flex;align-items: center;justify-content: center;gap: 6px;text-decoration: none;}
+        .btn-primary {background-color: var(--primary);color: white;}
+        .btn-primary:hover {background-color: #0D47A1;}
+        .btn-sm {padding: 4px 12px;font-size: 12px;border-radius: 6px;}
+        .btn-default {background-color: white;border: 1px solid var(--gray-200);color: var(--gray-900);}
+        .btn-default:hover {background-color: var(--gray-100);}
+        .btn-danger {background-color: var(--danger);color: white;}
+        .btn-danger:hover {background-color: #D92B2B;}
+        .btn-warning {background-color: var(--warning);color: white;}
+        .btn-warning:hover {background-color: #E56F00;}
+        /* 表格 */
+        .table {width: 100%;border-collapse: collapse;}
+        .table th {padding: 12px 16px;background: var(--gray-100);font-weight: 500;text-align: left;font-size: 14px;border-bottom: 1px solid var(--gray-200);}
+        .table td {padding: 16px;border-bottom: 1px solid var(--gray-200);font-size: 14px;}
+        /* 标签 */
+        .tag {display: inline-block;padding: 4px 10px;border-radius: 6px;font-size: 12px;font-weight: 500;}
+        .tag-success {background: rgba(0, 180, 42, 0.1);color: var(--success);}
+        .tag-danger {background: rgba(245, 63, 63, 0.1);color: var(--danger);}
+        .tag-primary {background: rgba(22, 93, 255, 0.1);color: var(--primary);}
+        /* 消息提示 */
+        .message-box {position: fixed;top: 80px;right: 24px;padding: 12px 24px;border-radius: 8px;color: white;font-size: 14px;z-index: 99999;animation: slideIn 0.3s ease;max-width: 300px;}
+        .message-success {background: var(--success);}
+        .message-error {background: var(--danger);}
+        @keyframes slideIn {from {transform: translateX(100%);opacity: 0;} to {transform: translateX(0);opacity: 1;}}
+        @keyframes slideOut {from {transform: translateX(0);opacity: 1;} to {transform: translateX(100%);opacity: 0;}}
+        /* 弹窗样式 */
+        .modal-overlay {position: fixed;top: 0;left: 0;right: 0;bottom: 0;background: rgba(0,0,0,0.5);display: none;justify-content: center;align-items: center;z-index: 9999;}
+        .modal-overlay.show {display: flex;}
+        .modal {background: white;border-radius: 16px;padding: 0;width: 560px;max-width: 90vw;max-height: 90vh;overflow: hidden;animation: scaleIn 0.3s ease;display: flex;flex-direction: column;}
+        @keyframes scaleIn {
+            from {opacity: 0;transform: scale(0.95);}
+            to {opacity: 1;transform: scale(1);}
+        }
+        .modal-header {padding: 20px 24px;border-bottom: 1px solid var(--gray-200);display: flex;justify-content: space-between;align-items: center;flex-shrink: 0;}
+        .modal-title {font-size: 18px;font-weight: 600;color: var(--gray-900);}
+        .modal-close {background: none;border: none;font-size: 24px;cursor: pointer;color: var(--gray-600);padding: 4px;}
+        .modal-close:hover {color: var(--gray-900);}
+        .modal-body {padding: 24px;overflow-y: auto;flex: 1;}
+        .modal-footer {padding: 16px 24px;border-top: 1px solid var(--gray-200);display: flex;justify-content: flex-end;gap: 12px;flex-shrink: 0;}
+        
+        /* 表单提示样式 */
+        .form-hint {font-size: 12px;color: var(--gray-600);margin-top: 6px;line-height: 1.5;}
+        
+        /* 密码强度指示器 */
+        .password-strength {margin-top: 10px;}
+        .strength-bar {height: 4px;background: var(--gray-200);border-radius: 2px;overflow: hidden;}
+        .strength-fill {height: 100%;width: 0;transition: all 0.3s ease;border-radius: 2px;}
+        .strength-label {font-size: 12px;color: var(--gray-600);margin-top: 6px;display: block;}
+        .strength-level-weak {background: var(--warning);}
+        .strength-level-medium {background: var(--primary);}
+        .strength-level-strong {background: var(--success);}
+        /* 表单样式 */
+        .form-group {margin-bottom: 20px;}
+        .form-label {display: block;margin-bottom: 8px;font-size: 14px;font-weight: 500;color: var(--gray-900);}
+        .form-label .required {color: var(--danger);}
+        .form-input, .form-select {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;transition: all 0.2s;}
+        .form-input:focus, .form-select:focus {outline: none;border-color: var(--primary);box-shadow: 0 0 0 3px rgba(22,93,255,0.1);}
+        .form-select:disabled, .form-input:disabled {background-color: var(--gray-100);cursor: not-allowed;}
+        .form-error {color: var(--danger);font-size: 12px;margin-top: 4px;display: none;}
+        .form-group.error .form-input,
+        .form-group.error .form-select {border-color: var(--danger);}
+        .form-group.error .form-error {display: block;}
+        /* 确认弹窗 */
+        .confirm-icon {font-size: 64px;text-align: center;margin-bottom: 16px;color: var(--danger);}
+        .confirm-message {text-align: center;font-size: 16px;color: var(--gray-900);margin-bottom: 8px;}
+        .confirm-desc {text-align: center;font-size: 14px;color: var(--gray-600);margin-bottom: 24px;}
+        /* 空状态 */
+        .empty-state {text-align: center;padding: 60px 20px;color: var(--gray-600);}
+        .empty-state i {font-size: 64px;margin-bottom: 16px;color: var(--gray-300);}
+        .empty-state p {font-size: 14px;}
+        /* 搜索区域 */
+        .search-bar {display: flex;gap: 12px;margin-bottom: 20px;}
+        .search-input {flex: 1;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;}
+        .search-input:focus {outline: none;border-color: var(--primary);}
+        .search-field {display: flex;flex-direction: column;gap: 4px;}
+        .search-field-label {font-size: 12px;color: var(--gray-600);font-weight: 500;}
+        .search-field-input, .search-field-select {width: 160px;height: 36px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 13px;outline: none;transition: all 0.2s;}
+        .search-field-input:focus, .search-field-select:focus {border-color: var(--primary);box-shadow: 0 0 0 2px rgba(22,93,255,0.08);}
+        .search-field-input::placeholder {color: var(--gray-300);}
+        .search-field-select {appearance: auto;background: white;cursor: pointer;}
+        /* 两栏布局 */
+        .grid-2 {display: grid;grid-template-columns: 1fr 1fr;gap: 20px;}
+    </style>
+</head>
+<body>
+    <div id="mainPage">
+        <main class="content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">用户列表</h3>
+                        <button class="btn btn-primary" onclick="openAddModal()">
+                            <i class="fa fa-plus"></i> 新增用户
+                        </button>
+                    </div>
+                    <div class="card-body" style="padding: 20px 24px 0;">
+                        <div class="search-bar" style="flex-wrap:wrap;align-items:flex-end;">
+                            <div class="search-field">
+                                <span class="search-field-label">账号</span>
+                                <div id="searchUsernameContainer"></div>
+                            </div>
+                            <div class="search-field">
+                                <span class="search-field-label">昵称</span>
+                                <div id="searchNicknameContainer"></div>
+                            </div>
+                            <div class="search-field">
+                                <span class="search-field-label">姓名</span>
+                                <div id="searchRealNameContainer"></div>
+                            </div>
+                            <div class="search-field">
+                                <span class="search-field-label">岗位</span>
+                                <div id="searchRoleIdContainer"></div>
+                            </div>
+                            <div class="search-field">
+                                <span class="search-field-label">所属平台</span>
+                                <div id="searchPlatformIdContainer"></div>
+                            </div>
+                            <div class="search-field">
+                                <span class="search-field-label">状态</span>
+                                <select id="searchStatus" class="search-field-select" onchange="renderUserTable()">
+                                    <option value="">全部状态</option>
+                                    <option value="active">启用</option>
+                                    <option value="disabled">禁用</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" style="height:36px;" onclick="renderUserTable()">搜索</button>
+                            <button class="btn btn-default" style="height:36px;" onclick="clearSearch()">清空</button>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <table class="table" id="userTable">
+                            <thead>
+                                <tr>
+                                    <th>账号</th>
+                                    <th>昵称</th>
+                                    <th>姓名</th>
+                                    <th>岗位</th>
+                                    <th>所属平台</th>
+                                    <th>手机号</th>
+                                    <th>状态</th>
+                                    <th>最后登录</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody">
+                                <!-- 动态渲染 -->
+                            </tbody>
+                        </table>
+                        <div class="empty-state" id="emptyState" style="display: none;">
+                            <i class="fa fa-users"></i>
+                            <p>暂无用户数据</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+    </div>
+
+    <!-- 新增/编辑用户弹窗 -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="userModalTitle">新增用户</div>
+                <button class="modal-close" onclick="closeUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    
+                    <div class="form-group" id="usernameGroup">
+                        <label class="form-label">账号 <span class="required">*</span></label>
+                        <input type="text" id="username" class="form-input" placeholder="请输入账号">
+                        <div class="form-hint">6-20位字母或数字</div>
+                        <div class="form-error" id="usernameError">请填写账号</div>
+                    </div>
+
+                    <div id="passwordFields">
+                        <div class="form-group" id="passwordGroup">
+                            <label class="form-label">密码 <span class="required">*</span></label>
+                            <input type="password" id="password" class="form-input" placeholder="请输入密码" oninput="checkPasswordStrength()">
+                            <div class="form-hint">至少8位</div>
+                            <div class="password-strength" id="passwordStrength">
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strengthFill"></div>
+                                </div>
+                                <span class="strength-label" id="strengthLabel"></span>
+                            </div>
+                            <div class="form-error" id="passwordError">请填写密码</div>
+                        </div>
+                        <div class="form-group" id="confirmPasswordGroup">
+                            <label class="form-label">确认密码 <span class="required">*</span></label>
+                            <input type="password" id="confirmPassword" class="form-input" placeholder="请再次输入密码">
+                            <div class="form-error" id="confirmPasswordError">请确认密码</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group" id="nicknameGroup">
+                            <label class="form-label">昵称 <span class="required">*</span></label>
+                            <input type="text" id="nickname" class="form-input" placeholder="请输入昵称">
+                            <div class="form-hint">2-15个字符</div>
+                            <div class="form-error" id="nicknameError">请填写昵称</div>
+                        </div>
+                        <div class="form-group" id="realNameGroup">
+                            <label class="form-label">姓名 <span class="required">*</span></label>
+                            <input type="text" id="realName" class="form-input" placeholder="请输入真实姓名">
+                            <div class="form-hint">2-10位中文</div>
+                            <div class="form-error" id="realNameError">请填写姓名</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group" id="phoneGroup">
+                            <label class="form-label">手机号</label>
+                            <input type="text" id="phone" class="form-input" placeholder="请输入手机号">
+                            <div class="form-hint">选填，11位中国大陆手机号</div>
+                            <div class="form-error" id="phoneError">请输入正确的手机号</div>
+                        </div>
+                        <div class="form-group" id="roleGroup">
+                            <label class="form-label">岗位 <span class="required">*</span></label>
+                            <select id="roleId" class="form-select">
+                                <option value="">请选择岗位</option>
+                            </select>
+                            <div class="form-error" id="roleError">请选择岗位</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="platformGroup">
+                        <label class="form-label">所属平台 <span class="required">*</span></label>
+                        <select id="platformId" class="form-select">
+                            <option value="">请选择所属平台</option>
+                        </select>
+                        <div class="form-hint" id="platformHint">超级管理员可选择"全局"，拥有所有平台数据访问权限</div>
+                        <div class="form-error" id="platformError">请选择所属平台</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeUserModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveUser()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重置密码弹窗 -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal" style="width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title">重置密码</div>
+                <button class="modal-close" onclick="closePasswordModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm">
+                    <input type="hidden" id="resetUserId">
+                    <div class="form-group" id="newPasswordGroup">
+                        <label class="form-label">新密码 <span class="required">*</span></label>
+                        <input type="password" id="newPassword" class="form-input" placeholder="请输入新密码" oninput="checkNewPasswordStrength()">
+                        <div class="form-hint">至少8位</div>
+                        <div class="password-strength" id="newPasswordStrength">
+                            <div class="strength-bar">
+                                <div class="strength-fill" id="newStrengthFill"></div>
+                            </div>
+                            <span class="strength-label" id="newStrengthLabel"></span>
+                        </div>
+                        <div class="form-error" id="newPasswordError">请填写新密码</div>
+                    </div>
+                    <div class="form-group" id="confirmNewPasswordGroup">
+                        <label class="form-label">确认新密码 <span class="required">*</span></label>
+                        <input type="password" id="confirmNewPassword" class="form-input" placeholder="请再次输入新密码">
+                        <div class="form-error" id="confirmNewPasswordError">请确认新密码</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closePasswordModal()">取消</button>
+                <button class="btn btn-primary" onclick="resetPassword()">确认重置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal" style="width: 420px;">
+            <div class="modal-header">
+                <div class="modal-title">删除用户</div>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon"><i class="fa fa-exclamation-triangle"></i></div>
+                <div class="confirm-message">确定要删除该用户吗？</div>
+                <div class="confirm-desc" id="deleteDesc">删除后无法恢复，请谨慎操作</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeDeleteModal()">取消</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="导航.js"></script>
+    <script src="common.js"></script>
+    <script>
+        let currentEditUserId = null;
+        let deleteUserId = null;
+
+        let searchUsernameSelect, searchNicknameSelect, searchRealNameSelect, searchRoleIdSelect, searchPlatformIdSelect;
+
+        function initSearchOptions() {
+            const users = Storage.getUsers();
+            const roles = Storage.getRoles();
+            const platforms = JSON.parse(localStorage.getItem('repkg_platforms') || '[]');
+
+            searchUsernameSelect = new SearchSelect('searchUsernameContainer', {
+                placeholder: '搜索账号...',
+                data: [...new Set(users.map(u => u.username).filter(Boolean))].map(v => ({ value: v, label: v })),
+                onChange: () => renderUserTable(),
+                width: '160px'
+            });
+
+            searchNicknameSelect = new SearchSelect('searchNicknameContainer', {
+                placeholder: '搜索昵称...',
+                data: [...new Set(users.map(u => u.nickname).filter(Boolean))].map(v => ({ value: v, label: v })),
+                onChange: () => renderUserTable(),
+                width: '160px'
+            });
+
+            searchRealNameSelect = new SearchSelect('searchRealNameContainer', {
+                placeholder: '搜索姓名...',
+                data: [...new Set(users.map(u => u.realName).filter(Boolean))].map(v => ({ value: v, label: v })),
+                onChange: () => renderUserTable(),
+                width: '160px'
+            });
+
+            searchRoleIdSelect = new SearchSelect('searchRoleIdContainer', {
+                placeholder: '全部岗位',
+                data: roles.map(role => ({ value: role.id, label: role.name })),
+                onChange: () => renderUserTable(),
+                width: '160px'
+            });
+
+            searchPlatformIdSelect = new SearchSelect('searchPlatformIdContainer', {
+                placeholder: '全部平台',
+                data: [{ value: 'global', label: '全局' }].concat(platforms.map(p => ({ value: p.id, label: p.platformName }))),
+                onChange: () => renderUserTable(),
+                width: '160px'
+            });
+        }
+
+        function clearSearch() {
+            searchUsernameSelect.clear();
+            searchNicknameSelect.clear();
+            searchRealNameSelect.clear();
+            searchRoleIdSelect.clear();
+            searchPlatformIdSelect.clear();
+            document.getElementById('searchStatus').value = '';
+            renderUserTable();
+        }
+
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Navigation && Navigation.init) {
+                Navigation.init('用户管理');
+            }
+            
+            // 检查登录
+            if (!UI.checkLogin()) return;
+            
+            // 检查系统管理权限
+            if (!Permission.hasPageAccess('system') || !Permission.hasActionPermission('system', 'view')) {
+                UI.showMessage('error', '您没有访问该页面的权限');
+                window.location.href = '母包列表.html';
+                return;
+            }
+
+            // 初始化UI
+            UI.initUserInfo();
+            UI.initUserDropdown();
+            
+            // 初始化搜索选项
+            initSearchOptions();
+            
+            // 绑定事件
+            // 点击遮罩关闭弹窗
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('show');
+                    }
+                });
+            });
+
+            // 渲染用户列表
+            renderUserTable();
+        });
+
+        // 加载岗位选项
+        function loadRoleOptions(selectedRoleId = null) {
+            const roles = Storage.getRoles();
+            const select = document.getElementById('roleId');
+            select.innerHTML = '<option value="">请选择岗位</option>' + 
+                roles.map(role => `<option value="${role.id}" ${role.id === selectedRoleId ? 'selected' : ''}>${role.name}</option>`).join('');
+        }
+
+        // 渲染用户列表
+        function renderUserTable() {
+            const searchUsername = (searchUsernameSelect ? searchUsernameSelect.getValue() : '').toLowerCase();
+            const searchNickname = (searchNicknameSelect ? searchNicknameSelect.getValue() : '').toLowerCase();
+            const searchRealName = (searchRealNameSelect ? searchRealNameSelect.getValue() : '').toLowerCase();
+            const searchRoleId = searchRoleIdSelect ? searchRoleIdSelect.getValue() : '';
+            const searchPlatformId = searchPlatformIdSelect ? searchPlatformIdSelect.getValue() : '';
+            const searchStatus = document.getElementById('searchStatus').value;
+
+            const users = Storage.getUsers().filter(user => {
+                if (searchUsername && !(user.username && user.username.toLowerCase().includes(searchUsername))) return false;
+                if (searchNickname && !(user.nickname && user.nickname.toLowerCase().includes(searchNickname))) return false;
+                if (searchRealName && !(user.realName && user.realName.toLowerCase().includes(searchRealName))) return false;
+                if (searchRoleId && user.roleId !== searchRoleId) return false;
+                if (searchPlatformId && user.platformId !== searchPlatformId) return false;
+                if (searchStatus && user.status !== searchStatus) return false;
+                return true;
+            });
+
+            const tbody = document.getElementById('userTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.getElementById('userTable');
+
+            if (users.length === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            emptyState.style.display = 'none';
+
+            const currentUser = Storage.getCurrentUser();
+
+            tbody.innerHTML = users.map(user => {
+                const role = Storage.getRoleById(user.roleId);
+                const isCurrentUser = currentUser && currentUser.id === user.id;
+                const isSuperAdmin = user.username === 'admin';
+                const platformName = getPlatformName(user.platformId);
+
+                return `
+                    <tr>
+                        <td>
+                            <strong>${user.username}</strong>
+                            ${isCurrentUser ? '<span class="tag tag-primary" style="margin-left: 8px;">当前登录</span>' : ''}
+                        </td>
+                        <td>${user.nickname}</td>
+                        <td>${user.realName}</td>
+                        <td><span class="tag tag-success">${role ? role.name : '-'}</span></td>
+                        <td>
+                            ${user.platformId === 'global'
+                                ? '<span class="tag" style="background:rgba(22,93,255,0.1);color:var(--primary);">全局</span>'
+                                : (platformName || '-')}
+                        </td>
+                        <td>${user.phone || '-'}</td>
+                        <td>
+                            <span class="tag ${user.status === 'active' ? 'tag-success' : 'tag-danger'}">
+                                ${user.status === 'active' ? '启用' : '禁用'}
+                            </span>
+                        </td>
+                        <td>${user.lastLogin || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="openEditModal('${user.id}')">编辑</button>
+                            <button class="btn btn-sm btn-warning" style="margin-left: 8px;" onclick="openResetPasswordModal('${user.id}')">重置密码</button>
+                            ${!isSuperAdmin ? `<button class="btn btn-sm btn-danger" style="margin-left: 8px;" onclick="openDeleteModal('${user.id}')">删除</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ===== 所属平台辅助 =====
+        function getPlatformName(platformId) {
+            if (!platformId || platformId === 'global') return null;
+            const data = localStorage.getItem('repkg_platforms');
+            if (!data) return '-';
+            const platforms = JSON.parse(data);
+            const found = platforms.find(p => p.id === platformId);
+            return found ? found.platformName : '-';
+        }
+
+        function loadPlatformOptions(selectedId) {
+            const select = document.getElementById('platformId');
+            select.innerHTML = '<option value="">请选择所属平台</option>';
+
+            // 全局选项
+            select.innerHTML += '<option value="global">全局（超级管理员）</option>';
+
+            // 加载已开启的平台
+            const data = localStorage.getItem('repkg_platforms');
+            if (data) {
+                const platforms = JSON.parse(data).filter(p => p.platformStatus !== false);
+                platforms.forEach(p => {
+                    select.innerHTML += `<option value="${p.id}">${p.platformName}</option>`;
+                });
+            }
+
+            select.value = selectedId || '';
+        }
+
+        // 清除错误状态
+        function clearErrors() {
+            document.querySelectorAll('.form-group').forEach(group => {
+                group.classList.remove('error');
+            });
+        }
+        
+        // 检查密码强度
+        function checkPasswordStrength() {
+            const password = document.getElementById('password').value;
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthLabel = document.getElementById('strengthLabel');
+            
+            if (password.length === 0) {
+                strengthFill.style.width = '0';
+                strengthLabel.textContent = '';
+                strengthFill.className = 'strength-fill';
+            } else if (password.length < 8) {
+                strengthFill.style.width = '33%';
+                strengthLabel.textContent = '弱';
+                strengthFill.className = 'strength-fill strength-level-weak';
+            } else if (password.length < 12) {
+                strengthFill.style.width = '66%';
+                strengthLabel.textContent = '中';
+                strengthFill.className = 'strength-fill strength-level-medium';
+            } else {
+                strengthFill.style.width = '100%';
+                strengthLabel.textContent = '强';
+                strengthFill.className = 'strength-fill strength-level-strong';
+            }
+        }
+        
+        // 检查新密码强度
+        function checkNewPasswordStrength() {
+            const password = document.getElementById('newPassword').value;
+            const strengthFill = document.getElementById('newStrengthFill');
+            const strengthLabel = document.getElementById('newStrengthLabel');
+            
+            if (password.length === 0) {
+                strengthFill.style.width = '0';
+                strengthLabel.textContent = '';
+                strengthFill.className = 'strength-fill';
+            } else if (password.length < 8) {
+                strengthFill.style.width = '33%';
+                strengthLabel.textContent = '弱';
+                strengthFill.className = 'strength-fill strength-level-weak';
+            } else if (password.length < 12) {
+                strengthFill.style.width = '66%';
+                strengthLabel.textContent = '中';
+                strengthFill.className = 'strength-fill strength-level-medium';
+            } else {
+                strengthFill.style.width = '100%';
+                strengthLabel.textContent = '强';
+                strengthFill.className = 'strength-fill strength-level-strong';
+            }
+        }
+        
+        // 重置密码强度显示
+        function resetPasswordStrength() {
+            document.getElementById('strengthFill').style.width = '0';
+            document.getElementById('strengthLabel').textContent = '';
+            document.getElementById('strengthFill').className = 'strength-fill';
+            document.getElementById('newStrengthFill').style.width = '0';
+            document.getElementById('newStrengthLabel').textContent = '';
+            document.getElementById('newStrengthFill').className = 'strength-fill';
+        }
+
+        // 显示错误
+        function showError(fieldId, message) {
+            const group = document.getElementById(fieldId + 'Group');
+            const error = document.getElementById(fieldId + 'Error');
+            if (group) group.classList.add('error');
+            if (error) error.textContent = message;
+        }
+
+        // 打开新增弹窗
+        function openAddModal() {
+            if (!Permission.hasActionPermission('system', 'add')) {
+                UI.showMessage('error', '您没有新增用户的权限');
+                return;
+            }
+
+            currentEditUserId = null;
+            document.getElementById('userModalTitle').textContent = '新增用户';
+            
+            // 显示密码字段
+            document.getElementById('passwordFields').style.display = 'block';
+            
+            // 清空表单
+            document.getElementById('userId').value = '';
+            document.getElementById('username').value = '';
+            document.getElementById('username').disabled = false;
+            document.getElementById('password').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('nickname').value = '';
+            document.getElementById('realName').value = '';
+            document.getElementById('phone').value = '';
+            
+            // 重置密码强度
+            resetPasswordStrength();
+            
+            // 加载岗位选项和平台选项
+            loadRoleOptions();
+            loadPlatformOptions('');
+            
+            clearErrors();
+            document.getElementById('userModal').classList.add('show');
+        }
+
+        // 打开编辑弹窗
+        function openEditModal(userId) {
+            if (!Permission.hasActionPermission('system', 'edit')) {
+                UI.showMessage('error', '您没有编辑用户的权限');
+                return;
+            }
+
+            const user = Storage.getUserById(userId);
+            if (!user) {
+                UI.showMessage('error', '用户不存在');
+                return;
+            }
+
+            currentEditUserId = userId;
+            document.getElementById('userModalTitle').textContent = '编辑用户';
+            
+            // 隐藏密码字段
+            document.getElementById('passwordFields').style.display = 'none';
+            
+            // 填充表单
+            document.getElementById('userId').value = userId;
+            document.getElementById('username').value = user.username;
+            document.getElementById('username').disabled = true;
+            document.getElementById('nickname').value = user.nickname;
+            document.getElementById('realName').value = user.realName;
+            document.getElementById('phone').value = user.phone || '';
+            
+            // 加载岗位选项和平台选项
+            loadRoleOptions(user.roleId);
+            loadPlatformOptions(user.platformId || '');
+            
+            clearErrors();
+            document.getElementById('userModal').classList.add('show');
+        }
+
+        // 关闭用户弹窗
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('show');
+            currentEditUserId = null;
+            resetPasswordStrength();
+        }
+
+        // 保存用户
+        function saveUser() {
+            clearErrors();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const nickname = document.getElementById('nickname').value.trim();
+            const realName = document.getElementById('realName').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const roleId = document.getElementById('roleId').value;
+            const platformId = document.getElementById('platformId').value;
+
+            let hasError = false;
+
+            // 验证 - 仅在新增时验证账号和密码
+            if (!currentEditUserId) {
+                const usernameValidation = Validator.validateUsername(username);
+                if (!usernameValidation.valid) {
+                    showError('username', usernameValidation.message);
+                    hasError = true;
+                }
+
+                const passwordValidation = Validator.validatePassword(password);
+                if (!passwordValidation.valid) {
+                    showError('password', passwordValidation.message);
+                    hasError = true;
+                } else if (password !== confirmPassword) {
+                    showError('confirmPassword', '两次密码输入不一致');
+                    hasError = true;
+                }
+            }
+
+            // 验证昵称
+            const nicknameValidation = Validator.validateNickname(nickname);
+            if (!nicknameValidation.valid) {
+                showError('nickname', nicknameValidation.message);
+                hasError = true;
+            }
+
+            // 验证姓名
+            const realNameValidation = Validator.validateRealName(realName);
+            if (!realNameValidation.valid) {
+                showError('realName', realNameValidation.message);
+                hasError = true;
+            }
+
+            // 验证手机号
+            const phoneValidation = Validator.validatePhone(phone, currentEditUserId);
+            if (!phoneValidation.valid) {
+                showError('phone', phoneValidation.message);
+                hasError = true;
+            }
+
+            // 验证岗位
+            const roleValidation = Validator.validateUserRole(roleId);
+            if (!roleValidation.valid) {
+                showError('role', roleValidation.message);
+                hasError = true;
+            }
+
+            // 验证所属平台
+            if (!platformId) {
+                showError('platform', '请选择所属平台');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            const userData = { nickname, realName, phone, roleId, platformId };
+            if (!currentEditUserId) {
+                userData.username = username;
+                userData.password = password;
+            }
+
+            if (currentEditUserId) {
+                // 更新
+                UserManager.updateUser(currentEditUserId, userData);
+                UI.showMessage('success', '用户更新成功');
+            } else {
+                // 新增
+                UserManager.addUser(userData);
+                UI.showMessage('success', '用户创建成功');
+            }
+
+            closeUserModal();
+            renderUserTable();
+        }
+
+        // 打开重置密码弹窗
+        function openResetPasswordModal(userId) {
+            if (!Permission.hasActionPermission('system', 'edit')) {
+                UI.showMessage('error', '您没有重置密码的权限');
+                return;
+            }
+
+            const user = Storage.getUserById(userId);
+            if (!user) {
+                UI.showMessage('error', '用户不存在');
+                return;
+            }
+
+            document.getElementById('resetUserId').value = userId;
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+            resetPasswordStrength();
+            clearErrors();
+            document.getElementById('passwordModal').classList.add('show');
+        }
+
+        // 关闭重置密码弹窗
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.remove('show');
+            resetPasswordStrength();
+        }
+
+        // 重置密码
+        function resetPassword() {
+            clearErrors();
+
+            const userId = document.getElementById('resetUserId').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+            let hasError = false;
+
+            const passwordValidation = Validator.validatePassword(newPassword);
+            if (!passwordValidation.valid) {
+                showError('newPassword', passwordValidation.message);
+                hasError = true;
+            } else if (newPassword !== confirmNewPassword) {
+                showError('confirmNewPassword', '两次密码输入不一致');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            UserManager.resetPassword(userId, newPassword);
+            UI.showMessage('success', '密码重置成功');
+            closePasswordModal();
+        }
+
+        // 打开删除确认弹窗
+        function openDeleteModal(userId) {
+            if (!Permission.hasActionPermission('system', 'delete')) {
+                UI.showMessage('error', '您没有删除用户的权限');
+                return;
+            }
+
+            const user = Storage.getUserById(userId);
+            if (!user) {
+                UI.showMessage('error', '用户不存在');
+                return;
+            }
+
+            const currentUser = Storage.getCurrentUser();
+            if (currentUser && currentUser.id === userId) {
+                UI.showMessage('error', '不能删除当前登录的账号');
+                return;
+            }
+
+            deleteUserId = userId;
+            document.getElementById('deleteDesc').textContent = '删除后无法恢复，请谨慎操作';
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        // 关闭删除弹窗
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+            deleteUserId = null;
+        }
+
+        // 确认删除
+        function confirmDelete() {
+            if (!deleteUserId) return;
+
+            const result = UserManager.deleteUser(deleteUserId);
+            if (result.success) {
+                UI.showMessage('success', '用户删除成功');
+                closeDeleteModal();
+                renderUserTable();
+            } else {
+                UI.showMessage('error', result.message);
+                closeDeleteModal();
+            }
+        }
+
+    </script>
+</body>
+</html>

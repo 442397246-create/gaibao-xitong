@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渠道出包资源编辑 - 在线分包管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="common.css" rel="stylesheet">
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;}
+        body {font-family: "Microsoft Yahei", sans-serif;background-color: #F2F3F5;color: #1D2129;}
+        :root {
+            --primary: #165DFF;--success: #00B42A;--warning: #FF7D00;--danger: #F53F3F;
+            --gray-100: #F2F3F5;--gray-200: #E5E6EB;--gray-300: #C9CDD4;
+            --gray-600: #86909C;--gray-900: #1D2129;
+        }
+        .content {padding: 24px;flex: 1;}
+        .card {background: white;border-radius: 12px;box-shadow: 0 2px 8px rgba(0,0,0,0.06);}
+        .card-body {padding: 24px;}
+        .tabs {display: flex;align-items: center;justify-content: space-between;border-bottom: 2px solid var(--gray-200);margin-bottom: 24px;padding-bottom: 0;}
+        .tab {font-size: 16px;font-weight: 600;color: var(--gray-900);padding-bottom: 12px;border-bottom: 2px solid var(--primary);margin-bottom: -2px;}
+        .btn {padding: 8px 24px;border-radius: 8px;border: none;cursor: pointer;font-size: 14px;transition: all 0.3s;display: inline-flex;align-items: center;justify-content: center;gap: 6px;text-decoration: none;}
+        .btn-primary {background-color: var(--primary);color: white;}
+        .btn-primary:hover {background-color: #0D47A1;}
+        .btn-default {background-color: white;border: 1px solid var(--gray-200);color: var(--gray-900);}
+        .btn-default:hover {background-color: var(--gray-100);}
+        .btn-sm {padding: 4px 12px;font-size: 12px;border-radius: 6px;}
+        .form-section {margin-bottom: 32px;}
+        .section-title {font-size: 15px;font-weight: 600;color: var(--gray-900);margin-bottom: 16px;padding-bottom: 8px;border-bottom: 1px solid var(--gray-200);}
+        .form-row {display: flex;align-items: flex-start;margin-bottom: 20px;gap: 24px;}
+        .form-row-label {width: 160px;min-width: 160px;font-size: 14px;font-weight: 500;color: var(--gray-900);padding-top: 10px;line-height: 22px;text-align: right;}
+        .form-row-body {flex: 1;max-width: 560px;}
+        .form-input {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;}
+        .form-input:disabled, .form-input[readonly] {background: var(--gray-100);color: var(--gray-600);cursor: not-allowed;}
+        .form-select {width: 100%;height: 44px;padding: 0 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;}
+        .form-textarea {width: 100%;min-height: 80px;padding: 12px;border: 1px solid var(--gray-200);border-radius: 8px;font-size: 14px;resize: vertical;}
+        .required {color: var(--danger);}
+        .form-hint {font-size: 12px;color: var(--gray-600);margin-top: 4px;}
+        .message-box {position: fixed;top: 80px;right: 24px;padding: 12px 24px;border-radius: 8px;color: white;font-size: 14px;z-index: 99999;animation: slideIn 0.3s ease;}
+        .message-success {background: var(--success);}
+        .message-error {background: var(--danger);}
+        @keyframes slideIn {from {transform: translateX(100%);opacity: 0;} to {transform: translateX(0);opacity: 1;}}
+        @keyframes modalIn {from {opacity: 0;transform: scale(0.9);} to {opacity: 1;transform: scale(1);}}
+        .checkboxes {display: flex;flex-wrap: wrap;gap: 16px 24px;}
+        .checkbox-item {display: flex;align-items: center;gap: 6px;font-size: 14px;cursor: pointer;}
+        .checkbox-item input[type="checkbox"] {width: 16px;height: 16px;cursor: pointer;}
+        /* 系统切换按钮 */
+        .system-switch-group {display: flex;gap: 0;}
+        .system-btn {padding: 6px 18px;border: 1px solid var(--gray-300);background: white;cursor: pointer;font-size: 13px;color: var(--gray-600);transition: all 0.2s;display: inline-flex;align-items: center;}
+        .system-btn:first-child {border-radius: 6px 0 0 6px;margin-right: -1px;}
+        .system-btn:last-child {border-radius: 0 6px 6px 0;margin-left: -1px;}
+        .system-btn:not(:first-child):not(:last-child) {border-radius: 0;}
+        .system-btn:hover {border-color: var(--primary);color: var(--primary);z-index: 1;}
+        .system-btn.active {background: var(--primary);color: white;border-color: var(--primary);z-index: 1;}
+        /* 文件上传 */
+        .v3-sign-container {position: relative;}
+        .v3-sign-upload {border: 2px dashed var(--gray-300);border-radius: 8px;padding: 20px;text-align: center;cursor: pointer;transition: border-color 0.3s;}
+        .v3-sign-upload:hover {border-color: var(--primary);}
+        .v3-sign-upload i {font-size: 28px;color: var(--gray-600);margin-bottom: 6px;}
+        .v3-sign-upload p {font-size: 13px;color: var(--gray-600);margin: 4px 0;}
+        .v3-sign-file-info {display: none;padding: 12px;background: var(--gray-100);border-radius: 8px;border: 1px solid var(--gray-200);align-items: center;gap: 12px;}
+        .v3-sign-file-info.show {display: flex;}
+        .file-details {flex: 1;}
+        .file-name {font-size: 14px;font-weight: 500;color: var(--gray-900);margin-bottom: 2px;}
+        .file-size {font-size: 12px;color: var(--gray-600);}
+        .remove-btn {background: none;border: none;color: var(--gray-600);cursor: pointer;font-size: 18px;padding: 4px;border-radius: 50%;transition: all 0.2s;}
+        .remove-btn:hover {color: var(--danger);}
+        /* 弹窗 */
+        .modal-overlay {display: none;position: fixed;top: 0;left: 0;right: 0;bottom: 0;background: rgba(0,0,0,0.5);z-index: 9999;align-items: center;justify-content: center;}
+        .modal-overlay.show {display: flex;}
+        .modal {background: white;border-radius: 12px;box-shadow: 0 20px 60px rgba(0,0,0,0.15);animation: modalIn 0.25s ease;width: 90%;max-width: 800px;margin: auto;display: flex;flex-direction: column;max-height: 90vh;}
+        .modal-header {display: flex;align-items: center;justify-content: space-between;padding: 20px 24px;border-bottom: 1px solid var(--gray-200);flex-shrink: 0;}
+        .modal-title {font-size: 16px;font-weight: 600;}
+        .modal-close {background: none;border: none;font-size: 24px;color: var(--gray-600);cursor: pointer;padding: 4px;}
+        .modal-close:hover {color: var(--gray-900);}
+        .modal-body {padding: 20px 24px;overflow-y: auto;flex: 1;}
+        .modal-footer {display: flex;gap: 12px;justify-content: flex-end;padding: 16px 24px;border-top: 1px solid var(--gray-200);flex-shrink: 0;}
+        .platform-select-table {width: 100%;border-collapse: collapse;}
+        .platform-select-table th {padding: 10px 16px;background: var(--gray-100);font-weight: 500;text-align: left;font-size: 13px;border-bottom: 1px solid var(--gray-200);}
+        .platform-select-table td {padding: 12px 16px;border-bottom: 1px solid var(--gray-200);font-size: 13px;}
+        .platform-select-table tbody tr:hover {background: var(--gray-100);cursor: pointer;}
+        /* 签名选择 */
+        .search-select-container {position: relative;}
+        .search-select-input {cursor: pointer;}
+        .search-select-dropdown {position: absolute;top: calc(100% + 4px);left: 0;right: 0;max-height: 240px;overflow-y: auto;background: white;border: 1px solid var(--gray-200);border-radius: 8px;box-shadow: 0 4px 12px rgba(0,0,0,0.1);z-index: 10000;}
+        .sign-dropdown-item {padding: 10px 12px;cursor: pointer;border-bottom: 1px solid var(--gray-100);transition: background 0.2s;}
+        .sign-dropdown-item:hover {background: var(--gray-100);}
+        #selectedSignInfo {background: #F7F8FA;}
+    </style>
+</head>
+<body>
+    <div id="mainPage">
+        <main class="content">
+            <div class="card">
+                <div class="card-body">
+                    <div class="tabs">
+                        <span class="tab" id="pageTitleTab">新增渠道出包资源</span>
+                        <div class="system-switch-group">
+                            <button type="button" class="system-btn active" data-system="android" onclick="switchSystem('android')">
+                                <i class="fa fa-android" style="margin-right:4px;"></i>Android
+                            </button>
+                            <button type="button" class="system-btn" data-system="ios" onclick="switchSystem('ios')">
+                                <i class="fa fa-apple" style="margin-right:4px;"></i>iOS
+                            </button>
+                            <button type="button" class="system-btn" data-system="pc" onclick="switchSystem('pc')">
+                                <i class="fa fa-desktop" style="margin-right:4px;"></i>PC端
+                            </button>
+                        </div>
+                    </div>
+                    <form id="resourceForm">
+                        <!-- 平台信息 -->
+                        <div class="form-section">
+                            <div class="section-title">平台信息</div>
+                            <div class="form-row">
+                                <div class="form-row-label"><span class="required">*</span> 所属平台</div>
+                                <div class="form-row-body">
+                                    <div class="form-input" id="platformName_display" onclick="openPlatformSelectModal()" style="display:flex;align-items:center;cursor:pointer;color:var(--gray-600);user-select:none;line-height:44px;">点击选择所属平台</div>
+                                    <input type="hidden" id="platformId">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 渠道信息 -->
+                        <div class="form-section">
+                            <div class="section-title">渠道信息</div>
+                            <div class="form-row">
+                                <div class="form-row-label"><span class="required">*</span> 系统类型</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="systemType" onchange="toggleSystemFields()">
+                                        <option value="">请选择系统类型</option>
+                                        <option value="ANDROID_SYS">Android</option>
+                                        <option value="IOS_SYS">iOS</option>
+                                        <option value="PC">PC端</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-row-label"><span class="required">*</span> 渠道名称</div>
+                                <div class="form-row-body">
+                                    <div class="form-input" id="channelName_display" onclick="openChannelSelectModal()" style="display:flex;align-items:center;cursor:pointer;color:var(--gray-600);user-select:none;line-height:44px;">点击选择渠道</div>
+                                    <input type="hidden" id="channelId">
+                                </div>
+                            </div>
+                            <div class="form-row mobile-only">
+                                <div class="form-row-label"><span class="required">*</span> 渠道出包资源类型</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="resourceType">
+                                        <option value="">请选择资源类型</option>
+                                        <option value="Small资源">Small资源</option>
+                                        <option value="Normal资源">Normal资源</option>
+                                        <option value="Full资源">Full资源</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-row-label">渠道出包资源版本号</div>
+                                <div class="form-row-body">
+                                    <input type="text" class="form-input" id="resourceVersion" placeholder="例如：v1.0">
+                                </div>
+                            </div>
+                            <!-- iOS端 - 渠道出包资源文件上传 -->
+                            <div class="form-row ios-only">
+                                <div class="form-row-label"><span class="required">*</span> 渠道出包资源</div>
+                                <div class="form-row-body">
+                                    <div class="v3-sign-container">
+                                        <div class="v3-sign-upload" id="iosPackResUploadArea" onclick="document.getElementById('iosPackResFileInput').click()">
+                                            <i class="fa fa-cloud-upload"></i>
+                                            <p>点击上传渠道出包资源（.zip / .ipa）</p>
+                                            <input type="file" id="iosPackResFileInput" style="display:none;" accept=".zip,.ipa">
+                                        </div>
+                                        <div class="v3-sign-file-info" id="iosPackResFileInfo">
+                                            <i class="fa fa-file-archive-o" style="font-size:24px;color:var(--primary);"></i>
+                                            <div class="file-details">
+                                                <div class="file-name" id="iosPackResFileName"></div>
+                                                <div class="file-size" id="iosPackResFileSize"></div>
+                                            </div>
+                                            <button type="button" class="remove-btn" onclick="document.getElementById('iosPackResFileInput').value='';document.getElementById('iosPackResUploadArea').style.display='flex';document.getElementById('iosPackResFileInfo').classList.remove('show');"><i class="fa fa-times-circle"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-row-label">资源屏幕方向</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="packResScreenOrientation">
+                                        <option value="DEFAULT">默认方向</option>
+                                        <option value="FOLLOW_GAME">跟随游戏方向</option>
+                                        <option value="LANDSCAPE_SCREEN">横屏</option>
+                                        <option value="VERTICAL_SCREEN">竖屏</option>
+                                    </select>
+                                    <div class="form-hint">packResScreenOrientationEnums</div>
+                                </div>
+                            </div>
+                            <div class="form-row android-only">
+                                <div class="form-row-label">分包资源屏蔽方向</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="resourceShieldDirection">
+                                        <option value="默认">默认</option>
+                                        <option value="横屏">横屏</option>
+                                        <option value="竖屏">竖屏</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-row-label">打包资源存储路径</div>
+                                <div class="form-row-body">
+                                    <input type="text" class="form-input" id="packResSavePath" placeholder="如: /storage/packres/">
+                                    <div class="form-hint">packResSavePath</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 签名选择 -->
+                        <div class="form-section">
+                            <div class="section-title">签名配置</div>
+                            <div class="form-row" id="signSelectWrapper">
+                                <div class="form-row-label"><span class="required">*</span> 选择签名</div>
+                                <div class="form-row-body">
+                                    <div class="search-select-container">
+                                        <input type="text" class="form-input search-select-input" id="signSearchInput" placeholder="请选择签名（输入关键词搜索）" readonly onclick="toggleSignDropdown()" autocomplete="off">
+                                        <i class="fa fa-chevron-down search-select-arrow" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-600);pointer-events:none;"></i>
+                                        <i class="fa fa-times-circle search-select-clear" id="signClearBtn" style="display:none;position:absolute;right:35px;top:50%;transform:translateY(-50%);color:var(--gray-600);cursor:pointer;" onclick="clearSelectedSign()"></i>
+                                        <div class="search-select-dropdown" id="signDropdown" style="display:none;">
+                                            <div style="padding:10px;border-bottom:1px solid var(--gray-100);position:sticky;top:0;background:white;z-index:10001;">
+                                                <div style="position:relative;">
+                                                    <i class="fa fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gray-600);"></i>
+                                                    <input type="text" id="signSearchFilter" oninput="filterSigns()" class="form-input" style="padding-left:32px;height:34px;font-size:13px;" placeholder="搜索签名文件/别名/渠道">
+                                                </div>
+                                            </div>
+                                            <div class="sign-dropdown-list" id="signDropdownList">
+                                                <div style="padding:20px;text-align:center;color:var(--gray-600);">加载中...</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="selectedSignInfo" style="display:none;margin-top:12px;padding:12px;border-radius:8px;border:1px solid var(--gray-200);">
+                                        <div style="display:flex;align-items:flex-start;gap:12px;">
+                                            <div style="flex:1;">
+                                                <div style="font-weight:500;color:var(--gray-900);margin-bottom:4px;" id="selectedSignName"></div>
+                                                <div style="font-size:12px;color:var(--gray-600);margin-bottom:2px;">别名：<span id="selectedSignAlias"></span></div>
+                                                <div style="font-size:12px;color:var(--gray-600);">所属渠道：<span id="selectedSignChannel"></span></div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-default" onclick="toggleSignDropdown()">修改</button>
+                                        </div>
+                                    </div>
+                                    <div id="signErrorTip" style="display:none;margin-top:8px;font-size:12px;color:var(--danger);">
+                                        <i class="fa fa-exclamation-circle"></i> <span id="signErrorText">没有找到匹配的签名，请先选择渠道</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PC端专属 -->
+                        <div class="form-section pc-only" style="display:none;">
+                            <div class="section-title">PC端配置</div>
+                            <div class="form-row">
+                                <div class="form-row-label"><span class="required">*</span> 证书选择</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="pc_certificate"><option value="ov证书">ov证书</option></select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-row-label">游戏官网</div>
+                                <div class="form-row-body"><input type="text" class="form-input" id="pc_gameWebsite" placeholder="请输入游戏官网链接"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-row-label">充值中心</div>
+                                <div class="form-row-body"><input type="text" class="form-input" id="pc_rechargeCenter" placeholder="请输入充值中心链接"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-row-label">游戏论坛</div>
+                                <div class="form-row-body"><input type="text" class="form-input" id="pc_gameForum" placeholder="请输入游戏论坛链接"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-row-label">在线客服</div>
+                                <div class="form-row-body"><input type="text" class="form-input" id="pc_onlineService" placeholder="请输入在线客服链接"></div>
+                            </div>
+                        </div>
+
+                        <!-- 其他配置 -->
+                        <div class="form-section">
+                            <div class="section-title">其他配置</div>
+                            <!-- Android专属 -->
+                            <div class="form-row android-only">
+                                <div class="form-row-label">是否继承Application</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="config_shieldApplication" onchange="toggleExtraInput('config_shieldApplication','extra_applicationPath')">
+                                        <option value="否">否</option><option value="是">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row android-only extra-input" id="extra_applicationPath_wrap" style="display:none;">
+                                <div class="form-row-label">Application包名路径</div>
+                                <div class="form-row-body"><input type="text" class="form-input" id="extra_applicationPath" placeholder="com.csdk.wankewl.demo.TestApplication"></div>
+                            </div>
+                            <div class="form-row android-only">
+                                <div class="form-row-label">是否存在微信回调</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="config_shieldPermission" onchange="toggleExtraInput('config_shieldPermission','extra_wxEntryPath')">
+                                        <option value="否">否</option><option value="是">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row android-only extra-input" id="extra_wxEntryPath_wrap" style="display:none;">
+                                <div class="form-row-label">WXEntryActivity路径</div>
+                                <div class="form-row-body"><input type="text" class="form-input" id="extra_wxEntryPath" placeholder='["com.csdk.wankewl.demo.wxapi.WXEntryActivity"]'></div>
+                            </div>
+                            <div class="form-row android-only">
+                                <div class="form-row-label">是否配置FileProvider</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="config_shieldProvider" onchange="toggleExtraInput('config_shieldProvider','extra_fileProviderName')">
+                                        <option value="否">否</option><option value="是">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row android-only extra-input" id="extra_fileProviderName_wrap" style="display:none;">
+                                <div class="form-row-label">FileProvider name</div>
+                                <div class="form-row-body"><input type="text" class="form-input" id="extra_fileProviderName" placeholder="com.jmhc.rbgame.SupportFileProvider"></div>
+                            </div>
+                            <div class="form-row android-only">
+                                <div class="form-row-label">是否创建R文件</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="config_shieldFile"><option value="是">是</option><option value="否">否</option></select>
+                                </div>
+                            </div>
+                            <div class="form-row android-only">
+                                <div class="form-row-label">强制指定targetSdkVersion</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="config_targetSdkVersion" onchange="toggleExtraInput('config_targetSdkVersion','extra_targetSdkVersionNum')">
+                                        <option value="否">否</option><option value="是">是</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row android-only extra-input" id="extra_targetSdkVersionNum_wrap" style="display:none;">
+                                <div class="form-row-label">targetSdkVersion版本号</div>
+                                <div class="form-row-body"><input type="text" class="form-input" id="extra_targetSdkVersionNum" placeholder="例如：26"></div>
+                            </div>
+                            <div class="form-row android-only">
+                                <div class="form-row-label">是否使用Aapt2</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="config_shieldApk2"><option value="否">否</option><option value="是">是</option></select>
+                                </div>
+                            </div>
+                            <!-- 通用 -->
+                            <div class="form-row">
+                                <div class="form-row-label">登录成功后是否存在UID</div>
+                                <div class="form-row-body">
+                                    <select class="form-select" id="config_shieldUDID"><option value="是">是</option><option value="否">否</option></select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-row-label">其他配置参数</div>
+                                <div class="form-row-body">
+                                    <div class="checkboxes">
+                                        <div class="checkbox-item android-only"><input type="checkbox" id="param_hotVersionV4"><label>忽略渠道注销登录回调</label></div>
+                                        <div class="checkbox-item android-only"><input type="checkbox" id="param_needXWalkSDK"><label>使用渠道的V4包</label></div>
+                                        <div class="checkbox-item android-only"><input type="checkbox" id="param_needVivoV7"><label>使用渠道的V7包</label></div>
+                                        <div class="checkbox-item android-only"><input type="checkbox" id="param_needOppoV2"><label>使用渠道的OkHttp包</label></div>
+                                        <div class="checkbox-item android-only"><input type="checkbox" id="param_needUCV3"><label>使用渠道的Okio包</label></div>
+                                        <div class="checkbox-item ios-only" style="display:none;"><input type="checkbox" id="param_isFireSDK"><label>是否是火速系列SDK</label></div>
+                                        <div class="checkbox-item android-only"><input type="checkbox" id="param_needQuarkSDK"><label>是否是QuickSDK</label></div>
+                                        <div class="checkbox-item android-only"><input type="checkbox" id="param_needNormalUC"><label>是否是丹祥SDK</label></div>
+                                        <div class="checkbox-item android-only"><input type="checkbox" id="param_needBaiduSDK"><label>是否是协宏海外SDK</label></div>
+                                        <div class="checkbox-item android-only"><input type="checkbox" id="param_needNormalHonorSDK"><label>是否是Ultra SDK</label></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 说明 -->
+                        <div class="form-section">
+                            <div class="section-title">其他说明</div>
+                            <div class="form-row">
+                                <div class="form-row-label">出包注意事项</div>
+                                <div class="form-row-body">
+                                    <textarea class="form-textarea" id="packageNotes" placeholder="请输入出包注意事项（选填）"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 按钮 -->
+                        <div style="padding-top:24px;border-top:1px solid var(--gray-200);display:flex;gap:12px;justify-content:flex-end;">
+                            <button type="button" class="btn btn-default" onclick="window.location.href='渠道分包资源列表.html'">取消</button>
+                            <button type="button" class="btn btn-primary" onclick="saveResource()"><i class="fa fa-check"></i> 保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 选择平台弹窗 -->
+    <div class="modal-overlay" id="platformSelectModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">选择所属平台</div>
+                <button class="modal-close" onclick="closePlatformSelectModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex;gap:12px;margin-bottom:16px;">
+                    <input type="text" class="form-input" id="platformSearchInput" placeholder="请输入平台名称搜索" style="width:200px;height:36px;font-size:13px;" oninput="renderPlatformSelectTable()">
+                    <button class="btn btn-sm btn-primary" onclick="renderPlatformSelectTable()">搜索</button>
+                </div>
+                <table class="platform-select-table"><thead><tr><th>编号</th><th>平台名称</th><th>操作</th></tr></thead><tbody id="platformSelectTableBody"></tbody></table>
+                <div id="platformEmptyState" style="display:none;text-align:center;padding:40px;color:var(--gray-600);">暂无匹配的平台数据</div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-default" onclick="closePlatformSelectModal()">取消</button></div>
+        </div>
+    </div>
+    <!-- 选择渠道弹窗 -->
+    <div class="modal-overlay" id="channelSelectModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">选择渠道</div>
+                <button class="modal-close" onclick="closeChannelSelectModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;">
+                    <input type="text" class="form-input" id="channelSearchInput" placeholder="搜索渠道名称" style="width:200px;height:36px;font-size:13px;" oninput="renderChannelSelectTable()">
+                    <select class="form-select" id="channelSystemTypeFilter" style="width:140px;height:36px;font-size:13px;" onchange="renderChannelSelectTable()">
+                        <option value="">全部系统类型</option>
+                        <option value="ANDROID_SYS">Android</option><option value="IOS_SYS">iOS</option><option value="PC">PC端</option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" onclick="renderChannelSelectTable()">搜索</button>
+                </div>
+                <table class="platform-select-table"><thead><tr><th>编号</th><th>渠道名称</th><th>系统类型</th><th>所属平台</th><th>操作</th></tr></thead><tbody id="channelSelectTableBody"></tbody></table>
+                <div id="channelEmptyState" style="display:none;text-align:center;padding:40px;color:var(--gray-600);">暂无匹配的渠道数据</div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-default" onclick="closeChannelSelectModal()">取消</button></div>
+        </div>
+    </div>
+
+    <script src="导航.js"></script>
+    <script src="common.js"></script>
+    <script>
+        var urlParams = new URLSearchParams(window.location.search);
+        var editId = urlParams.get('id');
+        var SIGN_CACHE_KEY = 'repkg_last_selected_sign';
+        var allSigns = [], filteredSigns = [], selectedSignData = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Navigation && Navigation.init) Navigation.init('渠道出包资源编辑');
+            if (!UI.checkLogin()) return;
+            UI.initUserInfo();
+            UI.initUserDropdown();
+            if (editId) {
+                document.getElementById('pageTitleTab').textContent = '编辑渠道出包资源';
+                loadEditData(editId);
+            }
+            switchSystem('android');
+        });
+
+        function loadEditData(id) {
+            var resources = JSON.parse(localStorage.getItem('repkg_channel_pack_resources') || '[]');
+            var item = resources.find(function(r) { return r.id == id; });
+            if (!item) return;
+            document.getElementById('platformId').value = item.platformId || '';
+            document.getElementById('platformName_display').textContent = item.platformName || '点击选择所属平台';
+            document.getElementById('channelId').value = item.channelId || '';
+            document.getElementById('channelName_display').textContent = item.channelName || '点击选择渠道';
+            document.getElementById('systemType').value = item.systemType || '';
+            document.getElementById('resourceType').value = item.resourceType || '';
+            document.getElementById('resourceVersion').value = item.resourceVersion || '';
+            document.getElementById('resourceShieldDirection').value = item.resourceShieldDirection || '默认';
+            document.getElementById('packResScreenOrientation').value = item.packResScreenOrientation || 'DEFAULT';
+            document.getElementById('packResSavePath').value = item.packResSavePath || '';
+            document.getElementById('packageNotes').value = item.packageNotes || '';
+            var sets = ['config_shieldUDID','config_shieldApplication','config_shieldPermission','config_shieldProvider','config_shieldFile','config_targetSdkVersion','config_shieldApk2'];
+            var vals = ['是','否','否','否','是','否','否'];
+            sets.forEach(function(k,i) { if (item[k]) document.getElementById(k).value = item[k]; });
+            ['extra_applicationPath','extra_wxEntryPath','extra_fileProviderName','extra_targetSdkVersionNum'].forEach(function(k) { if (item[k]) document.getElementById(k).value = item[k]; });
+            document.getElementById('pc_certificate').value = item.pc_certificate || 'ov证书';
+            ['pc_gameWebsite','pc_rechargeCenter','pc_gameForum','pc_onlineService'].forEach(function(k) { if (item[k]) document.getElementById(k).value = item[k]; });
+            ['param_hotVersionV4','param_needXWalkSDK','param_needVivoV7','param_needOppoV2','param_needUCV3','param_isFireSDK','param_needQuarkSDK','param_needNormalUC','param_needBaiduSDK','param_needNormalHonorSDK'].forEach(function(k) { document.getElementById(k).checked = !!item[k]; });
+            if (item.selectedSignId) {
+                var allS = JSON.parse(localStorage.getItem('repkg_signs') || '[]');
+                var sign = allS.find(function(s) { return s.id == item.selectedSignId; });
+                if (sign) applySelectedSign(sign);
+            }
+            toggleSystemFields();
+            switchSystem(item.systemType === 'IOS_SYS' ? 'ios' : item.systemType === 'PC' ? 'pc' : 'android');
+        }
+
+        function showMessage(type, msg) {
+            var box = document.createElement('div');
+            box.className = 'message-box message-' + type;
+            box.textContent = msg;
+            document.body.appendChild(box);
+            setTimeout(function() { box.remove(); }, 3000);
+        }
+
+        function switchSystem(sys) {
+            document.getElementById('systemType').value = sys === 'ios' ? 'IOS_SYS' : sys === 'pc' ? 'PC' : 'ANDROID_SYS';
+            document.querySelectorAll('.system-btn').forEach(function(b) { b.classList.remove('active'); });
+            var btn = document.querySelector('.system-btn[data-system="' + sys + '"]');
+            if (btn) btn.classList.add('active');
+            updateResourceTypeOptions(sys);
+            toggleSystemFields();
+        }
+
+        function toggleSystemFields() {
+            var type = document.getElementById('systemType').value;
+            document.querySelectorAll('.android-only').forEach(function(el) { el.style.display = 'none'; });
+            document.querySelectorAll('.ios-only').forEach(function(el) { el.style.display = 'none'; });
+            document.querySelectorAll('.pc-only').forEach(function(el) { el.style.display = 'none'; });
+            document.querySelectorAll('.mobile-only').forEach(function(el) { el.style.display = 'none'; });
+
+            if (type === 'IOS_SYS') {
+                document.querySelectorAll('.ios-only').forEach(function(el) { el.style.display = ''; });
+                document.querySelectorAll('.mobile-only').forEach(function(el) { el.style.display = ''; });
+                hideById('packResScreenOrientation'); hideById('packResSavePath');
+                var ss = document.getElementById('signSelectWrapper').closest('.form-section');
+                if (ss) ss.style.display = 'none';
+            } else if (type === 'PC') {
+                document.querySelectorAll('.pc-only').forEach(function(el) { el.style.display = ''; });
+                restoreById('packResScreenOrientation'); restoreById('packResSavePath');
+                var ss = document.getElementById('signSelectWrapper').closest('.form-section');
+                if (ss) ss.style.display = '';
+            } else {
+                document.querySelectorAll('.android-only').forEach(function(el) { el.style.display = ''; });
+                document.querySelectorAll('.mobile-only').forEach(function(el) { el.style.display = ''; });
+                restoreById('packResScreenOrientation'); restoreById('packResSavePath');
+                var ss = document.getElementById('signSelectWrapper').closest('.form-section');
+                if (ss) ss.style.display = '';
+            }
+            clearSelectedSign();
+            loadSignList();
+        }
+
+        function hideById(id) { var el = document.getElementById(id); if (el) { var w = el.closest('.form-row'); if (w) w.style.display = 'none'; } }
+        function restoreById(id) { var el = document.getElementById(id); if (el) { var w = el.closest('.form-row'); if (w) w.style.display = ''; } }
+
+        function updateResourceTypeOptions(platform) {
+            var sel = document.getElementById('resourceType');
+            if (!sel) return;
+            sel.innerHTML = platform === 'ios'
+                ? '<option value="iOS类型">iOS类型</option>'
+                : '<option value="">请选择资源类型</option><option value="Small资源">Small资源</option><option value="Normal资源">Normal资源</option><option value="Full资源">Full资源</option>';
+        }
+
+        function toggleExtraInput(selId, wrapId) {
+            var sel = document.getElementById(selId), wrap = document.getElementById(wrapId + '_wrap');
+            if (sel && wrap) wrap.style.display = sel.value === '是' ? '' : 'none';
+        }
+
+        // ---- 平台选择 ----
+        function openPlatformSelectModal() { document.getElementById('platformSelectModal').classList.add('show'); renderPlatformSelectTable(); }
+        function closePlatformSelectModal() { document.getElementById('platformSelectModal').classList.remove('show'); }
+        function renderPlatformSelectTable() {
+            var kw = (document.getElementById('platformSearchInput').value || '').trim().toLowerCase();
+            var list = JSON.parse(localStorage.getItem('repkg_platforms') || '[]');
+            var filtered = kw ? list.filter(function(p) { return p.platformName && p.platformName.toLowerCase().includes(kw); }) : list;
+            var tbody = document.getElementById('platformSelectTableBody'), empty = document.getElementById('platformEmptyState');
+            if (filtered.length === 0) { document.querySelector('#platformSelectModal table').style.display = 'none'; empty.style.display = 'block'; return; }
+            document.querySelector('#platformSelectModal table').style.display = ''; empty.style.display = 'none';
+            tbody.innerHTML = filtered.map(function(p) { return '<tr onclick="selectPlatform(\'' + p.id + '\',\'' + (p.platformName || '').replace(/'/g,"\\'") + '\')"><td>' + (p.id || '-') + '</td><td>' + (p.platformName || '-') + '</td><td><button class="btn btn-sm btn-primary">选择</button></td></tr>'; }).join('');
+        }
+        function selectPlatform(id, name) {
+            document.getElementById('platformId').value = id;
+            document.getElementById('platformName_display').textContent = name;
+            document.getElementById('platformName_display').style.color = 'var(--gray-900)';
+            closePlatformSelectModal();
+        }
+
+        // ---- 渠道选择 ----
+        function openChannelSelectModal() { document.getElementById('channelSelectModal').classList.add('show'); renderChannelSelectTable(); }
+        function closeChannelSelectModal() { document.getElementById('channelSelectModal').classList.remove('show'); }
+        function renderChannelSelectTable() {
+            var kw = (document.getElementById('channelSearchInput').value || '').trim().toLowerCase();
+            var sf = document.getElementById('channelSystemTypeFilter').value;
+            var list = JSON.parse(localStorage.getItem('repkg_channels') || '[]');
+            if (kw) list = list.filter(function(c) { return c.channelName && c.channelName.toLowerCase().includes(kw); });
+            if (sf) list = list.filter(function(c) { return c.systemType === sf; });
+            var tbody = document.getElementById('channelSelectTableBody'), empty = document.getElementById('channelEmptyState');
+            if (list.length === 0) { document.querySelector('#channelSelectModal table').style.display = 'none'; empty.style.display = 'block'; return; }
+            document.querySelector('#channelSelectModal table').style.display = ''; empty.style.display = 'none';
+            tbody.innerHTML = list.map(function(c) { return '<tr onclick="selectChannel(\'' + c.id + '\',\'' + (c.channelName || '').replace(/'/g,"\\'") + '\')"><td>' + (c.id || '-') + '</td><td>' + (c.channelName || '-') + '</td><td>' + (c.systemType || '-') + '</td><td>' + (c.platformName || '-') + '</td><td><button class="btn btn-sm btn-primary">选择</button></td></tr>'; }).join('');
+        }
+        function selectChannel(id, name) {
+            document.getElementById('channelId').value = id;
+            document.getElementById('channelName_display').textContent = name;
+            document.getElementById('channelName_display').style.color = 'var(--gray-900)';
+            closeChannelSelectModal();
+        }
+
+        // ---- 签名选择 ----
+        function loadSignList() {
+            var cid = document.getElementById('channelId').value, pid = document.getElementById('platformId').value;
+            var st = document.getElementById('systemType').value;
+            document.getElementById('signDropdownList').innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray-600);">加载中...</div>';
+            document.getElementById('signErrorTip').style.display = 'none';
+            allSigns = JSON.parse(localStorage.getItem('repkg_signs') || '[]');
+            filteredSigns = [];
+            if (!cid || !pid) { document.getElementById('signDropdownList').innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray-600);">请先选择平台和渠道</div>'; return; }
+            filteredSigns = allSigns.filter(function(s) {
+                if (s.channelId !== cid || s.companyId !== pid) return false;
+                var sf = s.signFile.toLowerCase();
+                return (st === 'ANDROID_SYS' && (sf.endsWith('.keystore') || sf.endsWith('.jks')))
+                    || (st === 'IOS_SYS' && (sf.endsWith('.p12') || sf.endsWith('.pfx')))
+                    || (st === 'PC' && (sf.includes('pc') || sf.endsWith('.pfx')));
+            });
+            renderSignDropdown();
+        }
+        function renderSignDropdown() {
+            var list = document.getElementById('signDropdownList');
+            if (filteredSigns.length === 0) { list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray-600);">未找到匹配的签名</div>'; return; }
+            list.innerHTML = filteredSigns.map(function(s) { return '<div class="sign-dropdown-item" onclick="selectSign(' + s.id + ')"><div style="font-weight:500;">' + s.signFile + '</div><div style="font-size:12px;color:var(--gray-600);">' + (s.keyAlias || '-') + ' | ' + (s.channelName || '-') + '</div></div>'; }).join('');
+        }
+        function toggleSignDropdown() {
+            var dd = document.getElementById('signDropdown');
+            dd.style.display = dd.style.display === 'none' ? '' : 'none';
+            if (dd.style.display !== 'none') loadSignList();
+        }
+        function filterSigns() {
+            var kw = (document.getElementById('signSearchFilter').value || '').toLowerCase();
+            var f = kw ? filteredSigns.filter(function(s) { return s.signFile.toLowerCase().includes(kw) || (s.keyAlias || '').toLowerCase().includes(kw); }) : filteredSigns;
+            var list = document.getElementById('signDropdownList');
+            list.innerHTML = f.length === 0 ? '<div style="padding:20px;text-align:center;color:var(--gray-600);">无匹配结果</div>' : f.map(function(s) { return '<div class="sign-dropdown-item" onclick="selectSign(' + s.id + ')"><div style="font-weight:500;">' + s.signFile + '</div><div style="font-size:12px;color:var(--gray-600);">' + (s.keyAlias || '-') + ' | ' + (s.channelName || '-') + '</div></div>'; }).join('');
+        }
+        function selectSign(id) { var s = allSigns.find(function(x) { return x.id == id; }); if (s) { applySelectedSign(s); document.getElementById('signDropdown').style.display = 'none'; } }
+        function applySelectedSign(s) {
+            selectedSignData = s;
+            document.getElementById('signSearchInput').value = s.signFile;
+            document.getElementById('signClearBtn').style.display = '';
+            document.getElementById('selectedSignInfo').style.display = 'block';
+            document.getElementById('selectedSignName').textContent = s.signFile;
+            document.getElementById('selectedSignAlias').textContent = s.keyAlias || '-';
+            document.getElementById('selectedSignChannel').textContent = s.channelName || '-';
+        }
+        function clearSelectedSign() {
+            selectedSignData = null;
+            document.getElementById('signSearchInput').value = '';
+            document.getElementById('signClearBtn').style.display = 'none';
+            document.getElementById('selectedSignInfo').style.display = 'none';
+        }
+
+        // ---- 保存 ----
+        function saveResource() {
+            var pid = document.getElementById('platformId').value.trim();
+            var cid = document.getElementById('channelId').value.trim();
+            var st = document.getElementById('systemType').value;
+            var rt = document.getElementById('resourceType').value;
+            if (!pid) { showMessage('error', '请选择所属平台'); return; }
+            if (!cid) { showMessage('error', '请选择渠道'); return; }
+            if (!st) { showMessage('error', '请选择系统类型'); return; }
+            if (st !== 'PC' && !rt) { showMessage('error', '请选择渠道出包资源类型'); return; }
+
+            var data = {
+                id: editId ? parseInt(editId) : Date.now(),
+                platformId: pid, platformName: document.getElementById('platformName_display').textContent,
+                channelId: cid, channelName: document.getElementById('channelName_display').textContent,
+                systemType: st, resourceType: rt,
+                resourceVersion: document.getElementById('resourceVersion').value.trim(),
+                resourceShieldDirection: document.getElementById('resourceShieldDirection').value,
+                packResScreenOrientation: document.getElementById('packResScreenOrientation').value,
+                packResSavePath: document.getElementById('packResSavePath').value.trim(),
+                packageNotes: document.getElementById('packageNotes').value.trim(),
+                config_shieldUDID: document.getElementById('config_shieldUDID').value,
+                config_shieldApplication: document.getElementById('config_shieldApplication').value,
+                extra_applicationPath: document.getElementById('extra_applicationPath').value.trim(),
+                config_shieldPermission: document.getElementById('config_shieldPermission').value,
+                extra_wxEntryPath: document.getElementById('extra_wxEntryPath').value.trim(),
+                config_shieldProvider: document.getElementById('config_shieldProvider').value,
+                extra_fileProviderName: document.getElementById('extra_fileProviderName').value.trim(),
+                config_shieldFile: document.getElementById('config_shieldFile').value,
+                config_targetSdkVersion: document.getElementById('config_targetSdkVersion').value,
+                extra_targetSdkVersionNum: document.getElementById('extra_targetSdkVersionNum').value.trim(),
+                config_shieldApk2: document.getElementById('config_shieldApk2').value,
+                pc_certificate: document.getElementById('pc_certificate').value,
+                pc_gameWebsite: document.getElementById('pc_gameWebsite').value.trim(),
+                pc_rechargeCenter: document.getElementById('pc_rechargeCenter').value.trim(),
+                pc_gameForum: document.getElementById('pc_gameForum').value.trim(),
+                pc_onlineService: document.getElementById('pc_onlineService').value.trim(),
+            };
+            ['param_hotVersionV4','param_needXWalkSDK','param_needVivoV7','param_needOppoV2','param_needUCV3','param_isFireSDK','param_needQuarkSDK','param_needNormalUC','param_needBaiduSDK','param_needNormalHonorSDK'].forEach(function(k) { data[k] = document.getElementById(k).checked; });
+            if (selectedSignData) { data.selectedSignId = selectedSignData.id; data.selectedSignFile = selectedSignData.signFile; }
+            data.updatedAt = new Date().toISOString();
+
+            var KEY = 'repkg_channel_pack_resources';
+            var resources = JSON.parse(localStorage.getItem(KEY) || '[]');
+            if (editId) {
+                var idx = resources.findIndex(function(r) { return r.id == editId; });
+                if (idx >= 0) resources[idx] = data; else resources.push(data);
+            } else {
+                resources.push(data);
+            }
+            localStorage.setItem(KEY, JSON.stringify(resources));
+            if (selectedSignData) {
+                var cache = { id: selectedSignData.id, signFile: selectedSignData.signFile, channelId: cid, systemType: st, lastUsed: Date.now() };
+                localStorage.setItem(SIGN_CACHE_KEY, JSON.stringify(cache));
+            }
+            showMessage('success', editId ? '更新成功' : '新增成功');
+            setTimeout(function() { window.location.href = '渠道分包资源列表.html'; }, 800);
+        }
+
+        document.addEventListener('click', function(e) {
+            var dd = document.getElementById('signDropdown');
+            if (dd && dd.style.display !== 'none') {
+                var ctr = document.querySelector('.search-select-container');
+                if (ctr && !ctr.contains(e.target)) dd.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
