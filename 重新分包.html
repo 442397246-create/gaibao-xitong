@@ -477,15 +477,14 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- 是否存在OAID证书（由新增游戏时上传，此处仅读取） -->
+                            <!-- 是否存在OAID证书 -->
                             <div class="form-row" data-systems="android">
                                 <div class="form-row-label">是否存在OAID证书</div>
                                 <div class="form-row-body">
-                                    <select id="isExistOaidCert" class="form-input" disabled style="background:var(--gray-100);color:var(--gray-600);">
+                                    <select id="isExistOaidCert" class="form-input" onchange="document.getElementById('oaidCertSection').style.display = this.value === 'true' ? '' : 'none'">
                                         <option value="false">否</option>
                                         <option value="true">是</option>
                                     </select>
-                                    <div style="font-size:12px;color:var(--gray-600);margin-top:4px;">根据所选母包自动读取，不可修改</div>
                                 </div>
                             </div>
                             <!-- OAID证书文件（选择"是"时显示，只读，来源：新增游戏时上传） -->
