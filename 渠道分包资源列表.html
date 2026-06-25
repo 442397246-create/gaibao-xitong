@@ -283,23 +283,23 @@
                                 </select>
                             </div>
                         </div>
-                        <!-- iOS端 - 渠道出包资源文件上传 -->
-                        <div class="form-row-2 ios-only" style="margin-bottom:20px;">
+                        <!-- 渠道出包资源文件上传 -->
+                        <div class="form-row-2 mobile-only" style="margin-bottom:20px;">
                             <div class="form-group">
                                 <label class="form-label">渠道出包资源 <span class="required">*</span></label>
                                 <div class="v3-sign-container">
-                                    <div class="v3-sign-upload" id="iosPackResUploadArea" onclick="document.getElementById('iosPackResFileInput').click()">
+                                    <div class="v3-sign-upload" id="packResUploadArea" onclick="document.getElementById('packResFileInput').click()">
                                         <i class="fa fa-cloud-upload"></i>
-                                        <p>点击上传渠道出包资源</p>
-                                        <input type="file" id="iosPackResFileInput" style="display:none;" accept=".zip,.ipa">
+                                        <p>点击上传渠道出包资源（.zip / .apk / .ipa）</p>
+                                        <input type="file" id="packResFileInput" style="display:none;" accept=".zip,.apk,.ipa">
                                     </div>
-                                    <div class="v3-sign-file-info" id="iosPackResFileInfo">
+                                    <div class="v3-sign-file-info" id="packResFileInfo">
                                         <i class="fa fa-file-archive-o" style="font-size:24px;color:var(--primary);"></i>
                                         <div class="file-details">
-                                            <div class="file-name" id="iosPackResFileName"></div>
-                                            <div class="file-size" id="iosPackResFileSize"></div>
+                                            <div class="file-name" id="packResFileName"></div>
+                                            <div class="file-size" id="packResFileSize"></div>
                                         </div>
-                                        <button type="button" class="remove-btn" onclick="document.getElementById('iosPackResFileInput').value='';document.getElementById('iosPackResUploadArea').style.display='flex';document.getElementById('iosPackResFileInfo').classList.remove('show');"><i class="fa fa-times-circle"></i></button>
+                                        <button type="button" class="remove-btn" onclick="document.getElementById('packResFileInput').value='';document.getElementById('packResUploadArea').style.display='flex';document.getElementById('packResFileInfo').classList.remove('show');"><i class="fa fa-times-circle"></i></button>
                                     </div>
                                 </div>
                             </div>

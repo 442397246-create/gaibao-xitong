@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>新建分包 - 在线分包管理系统</title>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="common.css" rel="stylesheet">
+    <link href="common.css?v=20250625" rel="stylesheet">
     <style>
         * {margin: 0;padding: 0;box-sizing: border-box;}
         body {font-family: "Microsoft Yahei", sans-serif;background-color: #F2F3F5;color: #1D2129;}
@@ -178,6 +181,8 @@
         .system-switch-group {
             display: flex;
             gap: 8px;
+            position: relative;
+            z-index: 2;
         }
         .system-btn {
             padding: 8px 20px;
@@ -190,6 +195,8 @@
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
+            position: relative;
+            z-index: 2;
         }
         .system-btn:hover {
             border-color: var(--primary);
@@ -372,7 +379,7 @@
                                 </div>
                             </div>
                             <!-- 游戏聚合类型 -->
-                            <div class="form-row" data-systems="android,pc">
+                            <div class="form-row" data-systems="android,ios,pc">
                                 <div class="form-row-label">游戏聚合类型</div>
                                 <div class="form-row-body">
                                     <select id="gameAggregationType" class="form-input">
@@ -968,8 +975,8 @@
         </div>
     </div>
 
-    <script src="导航.js"></script>
-    <script src="common.js"></script>
+    <script src="导航.js?v=20250625"></script>
+    <script src="common.js?v=20250625"></script>
     <script>
         // 游戏数据
         const gameData = {
@@ -1003,16 +1010,8 @@
             // 初始化密钥别名下拉
             initKeyAliasDropdown();
 
-            // 初始化系统类型字段显隐
+            // 初始化系统类型字段显隐（默认Android）
             switchSystem('android');
-
-            // 禁用顶部系统切换按钮（系统类型由母包决定）
-            document.querySelectorAll('.system-btn').forEach(function(btn) {
-                btn.style.pointerEvents = 'none';
-                btn.style.opacity = '0.5';
-                btn.style.cursor = 'not-allowed';
-                btn.onclick = null;
-            });
 
             // 禁用游戏聚合类型（由母包决定）
             var aggTypeEl = document.getElementById('gameAggregationType');
@@ -2270,9 +2269,8 @@
             if (target) target.style.display = flag ? '' : 'none';
         }
 
-        // 页面加载时加载母包列表
+        // 页面加载时初始化删除按钮
         document.addEventListener('DOMContentLoaded', function() {
-            loadGameOptions();
             updateCFBundleDeleteButtons();
         });
     </script>

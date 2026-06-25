@@ -140,6 +140,27 @@
                                     <input type="hidden" id="channelId">
                                 </div>
                             </div>
+                            <!-- 渠道出包资源文件上传 -->
+                            <div class="form-row mobile-only">
+                                <div class="form-row-label"><span class="required">*</span> 渠道出包资源</div>
+                                <div class="form-row-body">
+                                    <div class="v3-sign-container">
+                                        <div class="v3-sign-upload" id="packResUploadArea" onclick="document.getElementById('packResFileInput').click()">
+                                            <i class="fa fa-cloud-upload"></i>
+                                            <p>点击上传渠道出包资源（.zip / .apk / .ipa）</p>
+                                            <input type="file" id="packResFileInput" style="display:none;" accept=".zip,.apk,.ipa">
+                                        </div>
+                                        <div class="v3-sign-file-info" id="packResFileInfo">
+                                            <i class="fa fa-file-archive-o" style="font-size:24px;color:var(--primary);"></i>
+                                            <div class="file-details">
+                                                <div class="file-name" id="packResFileName"></div>
+                                                <div class="file-size" id="packResFileSize"></div>
+                                            </div>
+                                            <button type="button" class="remove-btn" onclick="document.getElementById('packResFileInput').value='';document.getElementById('packResUploadArea').style.display='flex';document.getElementById('packResFileInfo').classList.remove('show');"><i class="fa fa-times-circle"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-row mobile-only">
                                 <div class="form-row-label"><span class="required">*</span> 渠道出包资源类型</div>
                                 <div class="form-row-body">
@@ -157,25 +178,14 @@
                                     <input type="text" class="form-input" id="resourceVersion" placeholder="例如：v1.0">
                                 </div>
                             </div>
-                            <!-- iOS端 - 渠道出包资源文件上传 -->
-                            <div class="form-row ios-only">
-                                <div class="form-row-label"><span class="required">*</span> 渠道出包资源</div>
+                            <div class="form-row android-only">
+                                <div class="form-row-label">分包资源屏蔽方向</div>
                                 <div class="form-row-body">
-                                    <div class="v3-sign-container">
-                                        <div class="v3-sign-upload" id="iosPackResUploadArea" onclick="document.getElementById('iosPackResFileInput').click()">
-                                            <i class="fa fa-cloud-upload"></i>
-                                            <p>点击上传渠道出包资源（.zip / .ipa）</p>
-                                            <input type="file" id="iosPackResFileInput" style="display:none;" accept=".zip,.ipa">
-                                        </div>
-                                        <div class="v3-sign-file-info" id="iosPackResFileInfo">
-                                            <i class="fa fa-file-archive-o" style="font-size:24px;color:var(--primary);"></i>
-                                            <div class="file-details">
-                                                <div class="file-name" id="iosPackResFileName"></div>
-                                                <div class="file-size" id="iosPackResFileSize"></div>
-                                            </div>
-                                            <button type="button" class="remove-btn" onclick="document.getElementById('iosPackResFileInput').value='';document.getElementById('iosPackResUploadArea').style.display='flex';document.getElementById('iosPackResFileInfo').classList.remove('show');"><i class="fa fa-times-circle"></i></button>
-                                        </div>
-                                    </div>
+                                    <select class="form-select" id="resourceShieldDirection">
+                                        <option value="默认">默认</option>
+                                        <option value="横屏">横屏</option>
+                                        <option value="竖屏">竖屏</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-row">
@@ -188,16 +198,6 @@
                                         <option value="VERTICAL_SCREEN">竖屏</option>
                                     </select>
                                     <div class="form-hint">packResScreenOrientationEnums</div>
-                                </div>
-                            </div>
-                            <div class="form-row android-only">
-                                <div class="form-row-label">分包资源屏蔽方向</div>
-                                <div class="form-row-body">
-                                    <select class="form-select" id="resourceShieldDirection">
-                                        <option value="默认">默认</option>
-                                        <option value="横屏">横屏</option>
-                                        <option value="竖屏">竖屏</option>
-                                    </select>
                                 </div>
                             </div>
                             <div class="form-row">
@@ -280,7 +280,7 @@
                             <div class="section-title">其他配置</div>
                             <!-- Android专属 -->
                             <div class="form-row android-only">
-                                <div class="form-row-label">是否继承Application</div>
+                                <div class="form-row-label">是否存在需要继承的Application</div>
                                 <div class="form-row-body">
                                     <select class="form-select" id="config_shieldApplication" onchange="toggleExtraInput('config_shieldApplication','extra_applicationPath')">
                                         <option value="否">否</option><option value="是">是</option>
@@ -288,11 +288,11 @@
                                 </div>
                             </div>
                             <div class="form-row android-only extra-input" id="extra_applicationPath_wrap" style="display:none;">
-                                <div class="form-row-label">Application包名路径</div>
+                                <div class="form-row-label">Application的完整包名路径</div>
                                 <div class="form-row-body"><input type="text" class="form-input" id="extra_applicationPath" placeholder="com.csdk.wankewl.demo.TestApplication"></div>
                             </div>
                             <div class="form-row android-only">
-                                <div class="form-row-label">是否存在微信回调</div>
+                                <div class="form-row-label">是否存在微信回调(不包含别名对应的类)</div>
                                 <div class="form-row-body">
                                     <select class="form-select" id="config_shieldPermission" onchange="toggleExtraInput('config_shieldPermission','extra_wxEntryPath')">
                                         <option value="否">否</option><option value="是">是</option>
@@ -300,11 +300,11 @@
                                 </div>
                             </div>
                             <div class="form-row android-only extra-input" id="extra_wxEntryPath_wrap" style="display:none;">
-                                <div class="form-row-label">WXEntryActivity路径</div>
+                                <div class="form-row-label">WXEntryActivity的完整包名路径数组</div>
                                 <div class="form-row-body"><input type="text" class="form-input" id="extra_wxEntryPath" placeholder='["com.csdk.wankewl.demo.wxapi.WXEntryActivity"]'></div>
                             </div>
                             <div class="form-row android-only">
-                                <div class="form-row-label">是否配置FileProvider</div>
+                                <div class="form-row-label">是否需要配置FileProvider</div>
                                 <div class="form-row-body">
                                     <select class="form-select" id="config_shieldProvider" onchange="toggleExtraInput('config_shieldProvider','extra_fileProviderName')">
                                         <option value="否">否</option><option value="是">是</option>
@@ -312,7 +312,7 @@
                                 </div>
                             </div>
                             <div class="form-row android-only extra-input" id="extra_fileProviderName_wrap" style="display:none;">
-                                <div class="form-row-label">FileProvider name</div>
+                                <div class="form-row-label">FileProvider android:name</div>
                                 <div class="form-row-body"><input type="text" class="form-input" id="extra_fileProviderName" placeholder="com.jmhc.rbgame.SupportFileProvider"></div>
                             </div>
                             <div class="form-row android-only">
@@ -322,7 +322,7 @@
                                 </div>
                             </div>
                             <div class="form-row android-only">
-                                <div class="form-row-label">强制指定targetSdkVersion</div>
+                                <div class="form-row-label">是否强制指定targetSdkVersion版本</div>
                                 <div class="form-row-body">
                                     <select class="form-select" id="config_targetSdkVersion" onchange="toggleExtraInput('config_targetSdkVersion','extra_targetSdkVersionNum')">
                                         <option value="否">否</option><option value="是">是</option>
