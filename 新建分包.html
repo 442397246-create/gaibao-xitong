@@ -409,12 +409,7 @@
                                     <input type="text" class="form-input" placeholder="如: 新传奇世界">
                                 </div>
                             </div>
-                            <div class="form-row" data-systems="android,ios">
-                                <div class="form-row-label">游戏包名 <span class="required">*</span></div>
-                                <div class="form-row-body">
-                                    <input type="text" id="packageName" class="form-input" placeholder="游戏包名（解包自动解析）" disabled style="color:var(--gray-600);">
-                                </div>
-                            </div>
+                            <input type="hidden" id="packageName" value="">
                             <!-- 游戏参数 -->
                             <div class="form-row" data-systems="android,ios">
                                 <div class="form-row-label">游戏参数</div>
@@ -437,31 +432,6 @@
                                             <div style="font-size:12px;color:var(--gray-600);margin-bottom:4px;">game_app_id</div>
                                             <input type="text" class="form-input" value="app_demo_888" disabled>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- 游戏配置 -->
-                            <div class="section-divider" data-systems="android,ios"><span>游戏配置</span></div>
-                            <!-- 是否修改游戏Logo（由新增游戏时设置，此处仅读取） -->
-                            <div class="form-row" data-systems="android,ios">
-                                <div class="form-row-label">是否修改游戏Logo</div>
-                                <div class="form-row-body">
-                                    <select id="isModifyGameLogo" class="form-input" disabled style="background:var(--gray-100);color:var(--gray-600);">
-                                        <option value="false">否</option>
-                                        <option value="true">是</option>
-                                    </select>
-                                    <div style="font-size:12px;color:var(--gray-600);margin-top:4px;">根据所选母包自动读取，不可修改</div>
-                                </div>
-                            </div>
-                            <!-- 游戏Logo（选择"是"时显示，根据所选游戏读取，无法修改） -->
-                            <div class="form-row" data-systems="android,ios" id="logoUploadRow" style="display:none;">
-                                <div class="form-row-label">游戏Logo</div>
-                                <div class="form-row-body">
-                                    <div style="display:flex;align-items:center;gap:12px;">
-                                        <div style="width:48px;height:48px;border:1px solid var(--gray-200);border-radius:6px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;overflow:hidden;" id="gameLogoPreview">
-                                            <span style="color:var(--gray-400);font-size:12px;">Logo</span>
-                                        </div>
-                                        <span style="font-size:13px;color:var(--gray-600);" id="gameLogoFileName">选择母包后自动显示</span>
                                     </div>
                                 </div>
                             </div>
@@ -582,7 +552,7 @@
                             </div>
                             <div class="form-indent" data-systems="android,ios" id="gameNewPackname">
                                 <div class="form-row" data-systems="android,ios">
-                                    <div class="form-row-label">新游戏包名</div>
+                                    <div class="form-row-label">游戏包名</div>
                                     <div class="form-row-body">
                                         <input type="text" class="form-input" id="gameNewPacknameInput" placeholder="如: com.newgame.chang" disabled style="color:var(--gray-600);">
                                     </div>
@@ -1346,8 +1316,6 @@
                 gameAggregationType: document.getElementById('gameAggregationType').value.trim(),
                 packageName: document.getElementById('packageName').value.trim(),
                 gameParams: document.getElementById('gameParams').value.trim(),
-                isModifyGameLogo: document.getElementById('isModifyGameLogo').value === 'true',
-                logoSavePath: document.getElementById('gameLogoFileName').textContent || '',
                 isModifyTargetSdkVersion: document.getElementById('isModifyTargetSdkVersion').value === 'true',
                 targetSdkVersion: document.getElementById('targetSdkVersionValue').value.trim(),
                 createdAt: new Date().toISOString()
@@ -1368,10 +1336,6 @@
         }
 
         // ===== GameInfoBean 联动函数 =====
-        function toggleGameLogoUpload() {
-            const v = document.getElementById('isModifyGameLogo').value === 'true';
-            document.getElementById('logoUploadRow').style.display = v ? '' : 'none';
-        }
         function toggleTargetSdkVersion() {
             const v = document.getElementById('isModifyTargetSdkVersion').value === 'true';
             document.getElementById('targetSdkVersionRow').style.display = v ? '' : 'none';
@@ -1398,7 +1362,6 @@
                 if (!f || !t) return;
                 t.style.display = f.value === 'true' ? '' : 'none';
             }
-            safeToggle('isModifyGamePackname','gameNewPackname');
             safeToggle('isModifyGameInstallName','gameNewInstallName');
             safeToggle('isModifyGameIcon','gameNewIconPath');
             safeToggle('isModifyGameVersion','gameVersionGroup');
@@ -1407,8 +1370,6 @@
             safeToggle('isModifySmaliMerge','smaliMergeSection');
             safeToggle('isModifyResMerge','resMergeSection');
             safeToggle('isExistOaidCert','oaidCertSection');
-            // Logo toggle handled separately by toggleGameLogoUpload
-            if (typeof toggleGameLogoUpload === 'function') toggleGameLogoUpload();
             if (typeof toggleGamePackname === 'function') toggleGamePackname();
             // iOS section handled separately (only when systemType===ios)
         }
