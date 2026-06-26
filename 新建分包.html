@@ -392,14 +392,21 @@
                                     </select>
                                 </div>
                             </div>
-                            <!-- 游戏包名 -->
+                            <!-- 是否修改游戏安装名称 -->
                             <div class="form-row" data-systems="android,ios">
-                                <div class="form-row-label">是否修改游戏包名</div>
+                                <div class="form-row-label">是否修改游戏安装名称</div>
                                 <div class="form-row-body">
-                                    <select id="isModifyBasePackname" class="form-input" onchange="toggleBasePackname()">
-                                        <option value="false" selected>否</option>
+                                    <select id="isModifyGameInstallName" class="form-input" onchange="togglePackField('isModifyGameInstallName','gameNewInstallName')">
+                                        <option value="false">否</option>
                                         <option value="true">是</option>
                                     </select>
+                                </div>
+                            </div>
+                            <!-- 新游戏安装名 -->
+                            <div class="form-row" data-systems="android,ios" id="gameNewInstallName" style="display:none;">
+                                <div class="form-row-label">新游戏安装名</div>
+                                <div class="form-row-body">
+                                    <input type="text" class="form-input" placeholder="如: 新传奇世界">
                                 </div>
                             </div>
                             <div class="form-row" data-systems="android,ios">
@@ -567,20 +574,20 @@
                             <div class="form-row" data-systems="android,ios">
                                 <div class="form-row-label">是否修改游戏包名</div>
                                 <div class="form-row-body">
-                                    <select id="isModifyGamePackname" class="form-input" onchange="togglePackField('isModifyGamePackname','gameNewPackname')">
+                                    <select id="isModifyGamePackname" class="form-input" onchange="toggleGamePackname()">
                                         <option value="false">否</option>
                                         <option value="true">是</option>
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-indent" data-systems="android,ios" id="gameNewPackname" style="display:none;">
+                            <div class="form-indent" data-systems="android,ios" id="gameNewPackname">
                                 <div class="form-row" data-systems="android,ios">
                                     <div class="form-row-label">新游戏包名</div>
                                     <div class="form-row-body">
-                                        <input type="text" class="form-input" placeholder="如: com.newgame.chang">
+                                        <input type="text" class="form-input" id="gameNewPacknameInput" placeholder="如: com.newgame.chang" disabled style="color:var(--gray-600);">
                                     </div>
                                 </div>
-                                <div class="form-row" data-systems="android,ios">
+                                <div class="form-row" data-systems="android,ios" id="gamePacknameScopeRow" style="display:none;">
                                     <div class="form-row-label">包名修改范围</div>
                                     <div class="form-row-body">
                                         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px;font-size:13px;">
@@ -592,23 +599,6 @@
                                             <label style="cursor:pointer;"><input type="checkbox" value="provider" style="margin-right:4px;" checked> 修改Provider</label>
                                             <label style="cursor:pointer;"><input type="checkbox" value="activity-alias" style="margin-right:4px;" checked> 修改activity-alias</label>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row" data-systems="android,ios">
-                                <div class="form-row-label">是否修改游戏安装名</div>
-                                <div class="form-row-body">
-                                    <select id="isModifyGameInstallName" class="form-input" onchange="togglePackField('isModifyGameInstallName','gameNewInstallName')">
-                                        <option value="false">否</option>
-                                        <option value="true">是</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-indent" data-systems="android,ios">
-                                <div class="form-row" data-systems="android,ios" id="gameNewInstallName" style="display:none;">
-                                    <div class="form-row-label">新游戏安装名</div>
-                                    <div class="form-row-body">
-                                        <input type="text" class="form-input" placeholder="如: 新传奇世界">
                                     </div>
                                 </div>
                             </div>
@@ -1387,10 +1377,16 @@
             document.getElementById('targetSdkVersionRow').style.display = v ? '' : 'none';
         }
 
-        function toggleBasePackname() {
-            const v = document.getElementById('isModifyBasePackname').value === 'true';
-            document.getElementById('packageName').disabled = !v;
-            document.getElementById('packageName').style.color = v ? 'var(--gray-900)' : 'var(--gray-600)';
+        function toggleGamePackname() {
+            const v = document.getElementById('isModifyGamePackname').value === 'true';
+            const input = document.getElementById('gameNewPacknameInput');
+            const scope = document.getElementById('gamePacknameScopeRow');
+            if (input) {
+                input.disabled = !v;
+                input.style.color = v ? 'var(--gray-900)' : 'var(--gray-600)';
+                input.style.background = v ? '' : 'var(--gray-100)';
+            }
+            if (scope) scope.style.display = v ? '' : 'none';
         }
 
         // 系统切换时重新应用所有条件展开状态
@@ -1413,7 +1409,7 @@
             safeToggle('isExistOaidCert','oaidCertSection');
             // Logo toggle handled separately by toggleGameLogoUpload
             if (typeof toggleGameLogoUpload === 'function') toggleGameLogoUpload();
-            if (typeof toggleBasePackname === 'function') toggleBasePackname();
+            if (typeof toggleGamePackname === 'function') toggleGamePackname();
             // iOS section handled separately (only when systemType===ios)
         }
 
@@ -1633,8 +1629,6 @@
             stDisplay.style.color = 'var(--gray-600)';
             stDisplay.style.fontWeight = 'normal';
             document.getElementById('packageName').value = '';
-            document.getElementById('isModifyBasePackname').value = 'false';
-            toggleBasePackname();
             document.getElementById('gameParams').value = '';
         }
 
@@ -2280,9 +2274,6 @@
             stDisplay.style.background = 'var(--gray-100)';
             stDisplay.style.fontWeight = '500';
             document.getElementById('packageName').value = game.packageName || '';
-            // 选择母包后自动启用包名编辑
-            document.getElementById('isModifyBasePackname').value = 'true';
-            toggleBasePackname();
             document.getElementById('gameParams').value = game.parametersJsonFormat || '';
             document.getElementById('gcreenOrientation').value = game.gcreenOrientation || '横屏';
             document.getElementById('gameAggregationType').value = game.gameAggregationType || '';
